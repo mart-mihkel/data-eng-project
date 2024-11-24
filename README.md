@@ -1,6 +1,6 @@
 # data-eng-project
 
 ```bash
-echo "AIRFLOW_UID=$(id -i) > .env"
-echo "AIRFLOW_PROJ_DIF=airflow > .env"
+echo -e "AIRFLOW_UID=$(id -u)" > .env
+docker compose up airflow-init
 ```

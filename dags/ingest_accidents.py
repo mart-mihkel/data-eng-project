@@ -12,6 +12,9 @@ API = "https://avaandmed.eesti.ee/api"
 DATASET_ID = "d43cbb24-f58f-4928-b7ed-1fcec2ef355b"
 FILE_ID = "3c255d23-8fa7-479f-b4bb-9c8c636dbba9"
 
+DUCK_DB = "/opt/airflow/duckdb/duck.db"
+ACCIDENT_TABLE = "traffic_accidents"
+
 COL_MAP = {
     "Juhtumi nr": "Case ID",
     "Toimumisaeg": "Time of accident",
@@ -71,7 +74,7 @@ COL_MAP = {
 }
 
 
-def download_data():
+def extract():
     url = f"{API}/datasets/{DATASET_ID}/files/{FILE_ID}"
     res = requests.get(url)
 
@@ -86,7 +89,7 @@ def download_data():
     data.to_csv(f"/tmp/{FILE_ID}", index=False)
 
 
-def preprocess_data():
+def wrangle():
     df = pd.read_csv(f"/tmp/{FILE_ID}")
     df = df.rename(columns=COL_MAP)
 
@@ -97,32 +100,41 @@ def preprocess_data():
     x, y = transformer.transform(df['X coordinate'], df['Y coordinate'])
     df['X coordinate'], df['Y coordinate'] = x, y
 
-    df.to_csv(f"/tmp/{FILE_ID}")
+    df.to_csv(f"/tmp/{FILE_ID}", index=False)
 
 
-def load_duckdb():
-    db_name = "duck.db"
-    table_name = "traffic_accidents"
+def load():
+    con = duckdb.connect(DUCK_DB)
 
-    con = duckdb.connect(f"/duckdb/{db_name}")
-    con.execute(f"CREATE TABLE IF NOT EXISTS {table_name} FROM read_csv('/tmp/{FILE_ID}')")
-    con.execute(f"INSERT INTO {table_name} SELECT * FROM read_csv('/tmp/{FILE_ID})")
+    con.sql(f"""
+        CREATE TABLE IF NOT EXISTS {ACCIDENT_TABLE} AS FROM read_csv("/tmp/{FILE_ID}")
+    """)
+
+    con.sql(f"""
+        INSERT INTO {ACCIDENT_TABLE} 
+        SELECT * 
+        FROM read_csv("/tmp/{FILE_ID}") 
+        WHERE "Time of accident" > (SELECT "Time of accident"
+                                    FROM {ACCIDENT_TABLE} 
+                                    ORDER BY "Time of accident" DESC 
+                                    LIMIT 1)
+    """)
 
 
-with DAG("ingest_accidents", catchup=False) as dag:
+with DAG("traffic_accidents_etl", catchup=False) as dag:
     t1 = PythonOperator(
-        task_id="download_traffic_accident_data",
-        python_callable=download_data,
+        task_id="extract_traffic_accidents",
+        python_callable=extract,
     )
 
     t2 = PythonOperator(
-        task_id="preporcess_traffic_accident_data",
-        python_callable=preprocess_data,
+        task_id="preporcess_traffic_accidents",
+        python_callable=wrangle,
     )
 
     t3 = PythonOperator(
-        task_id="load_traffic_accident_data",
-        python_callable=load_duckdb,
+        task_id="load_traffic_accidents",
+        python_callable=load,
     )
 
     _ = t1 >> t2 >> t3

@@ -1,6 +1,8 @@
 # data-eng-project
 
 ```bash
-echo "AIRFLOW_UID=$(id -i) > .env"
-echo "AIRFLOW_PROJ_DIF=airflow > .env"
+echo -e "AIRFLOW_UID=$(id -u)" > .env
+echo -e "AVAANDMED_API_KEY=[your open data portal api-key]" > .env
+echo -e "AVAANDMED_API_KEY_ID=[your open data portal api-key id]" > .env
+docker compose up airflow-init
 ```

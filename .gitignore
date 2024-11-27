@@ -1,3 +1,10 @@
+# python
+__pycache__
+.venv
+
 .env
-./mnt/tmp/
+
+# airflow
+logs
+
 .DS_Store

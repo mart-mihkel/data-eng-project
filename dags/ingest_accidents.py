@@ -84,9 +84,9 @@ def extract():
         print(f"Fetching traffic accident datat failed with code {res.status_code}")
         # return
 
-    # data = pd.DataFrame(res["data"]) # pseudocode for real solution
-    data = pd.read_csv("/mnt/data/lo_2011_2024.csv", sep=";")
-    data.to_csv(f"/tmp/{FILE_ID}", index=False)
+    # df = pd.DataFrame(res["data"]) # pseudocode for real solution
+    df = pd.read_csv("/mnt/data/lo_2011_2024.csv", sep=";")
+    df.to_csv(f"/tmp/{FILE_ID}", index=False)
 
 
 def wrangle():

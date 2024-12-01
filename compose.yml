@@ -117,6 +117,19 @@ services:
       start_period: 30s
     restart: always
 
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 27017:27017
+      - 27018:27018
+    volumes:
+      - mongo-db-volume:/data
+    restart: always
+
   airflow-webserver:
     <<: *airflow-common
     command: webserver
@@ -288,3 +301,4 @@ services:
 
 volumes:
   postgres-db-volume:
+  mongo-db-volume:

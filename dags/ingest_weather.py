@@ -55,7 +55,7 @@ def load():
     )
 
     for f in csvs:
-        items = pd.read_csv(f).to_dict(orient="records")
+        items = pd.read_csv("/tmp/historical_weather/" + f).to_dict(orient="records")
         col.insert_many(items)
 
 

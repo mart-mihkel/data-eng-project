@@ -1,7 +1,6 @@
-import duckdb
 import requests
-
 import pandas as pd
+from pymongo import MongoClient
 
 from pyproj import Transformer
 
@@ -12,8 +11,9 @@ API = "https://avaandmed.eesti.ee/api"
 DATASET_ID = "d43cbb24-f58f-4928-b7ed-1fcec2ef355b"
 FILE_ID = "3c255d23-8fa7-479f-b4bb-9c8c636dbba9"
 
-DUCK_DB = "/opt/airflow/duckdb/duck.db"
-ACCIDENT_TABLE = "traffic_accidents"
+MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
+ACCIDENT_DB = "accidents"
+ACCIDENT_COLLECTION = "traffic_accidents"
 
 COL_MAP = {
     "Juhtumi nr": "Case ID",
@@ -30,7 +30,7 @@ COL_MAP = {
     "Tee km": "Road kilometer",
     "Maakond": "County",
     "Omavalitsus": "Commune / Local Government",
-    "Asustusüksus": "Village",
+    "Asutusüksus": "Village",
     "Asula": "Is the location a settlement",
     "Liiklusõnnetuse liik": "Type of traffic accident (generalized)",
     "Liiklusõnnetuse liik (detailne)": "Type of traffic accident (detailed)",
@@ -94,7 +94,7 @@ def wrangle():
     df = df.rename(columns=COL_MAP)
 
     original_crs_epsg = 3301
-    target_crs_epsg = 4326 
+    target_crs_epsg = 4326
     transformer = Transformer.from_crs(original_crs_epsg, target_crs_epsg)
 
     x, y = transformer.transform(df['X coordinate'], df['Y coordinate'])
@@ -104,21 +104,13 @@ def wrangle():
 
 
 def load():
-    con = duckdb.connect(DUCK_DB)
+    client = MongoClient(MONGO_CONNECTION_STRING)
+    col = client[ACCIDENT_DB][ACCIDENT_COLLECTION]
 
-    con.sql(f"""
-        CREATE TABLE IF NOT EXISTS {ACCIDENT_TABLE} AS FROM read_csv("/tmp/{FILE_ID}")
-    """)
-
-    con.sql(f"""
-        INSERT INTO {ACCIDENT_TABLE} 
-        SELECT * 
-        FROM read_csv("/tmp/{FILE_ID}") 
-        WHERE "Time of accident" > (SELECT "Time of accident"
-                                    FROM {ACCIDENT_TABLE} 
-                                    ORDER BY "Time of accident" DESC 
-                                    LIMIT 1)
-    """)
+    data = pd.read_csv(f"/tmp/{FILE_ID}")
+    data.index = data.index.map(str)
+    data = data.to_dict(orient="records")
+    col.insert_many(data)
 
 
 with DAG("traffic_accidents_etl", catchup=False) as dag:

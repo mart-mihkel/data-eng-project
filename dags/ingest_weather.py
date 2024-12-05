@@ -1,16 +1,16 @@
 import os
 import pandas as pd
-
+import pymongo
 from pymongo import MongoClient
 
 from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
-MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
+MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017/?connectTimeoutMS=40000"
 
-WEATHER_DB = "weather"
-WEATHER_COLLECTION = "historical_weather"
+WEATHER_DB = "dataeng_project"
+WEATHER_COLLECTION = "weather"
 
 COL_MAP = {
     "Aasta": "Year",
@@ -38,15 +38,27 @@ def wrangle():
     )
 
     for f in xlsxs:
+        print("Wrangling: ", f)
         df = pd.read_excel(f"/tmp/historical_weather/{f}", header=2)
         df = df.rename(columns=COL_MAP)
+        if("Year" not in df.columns):
+            df.rename({'Unnamed: 0':"Year"}, axis=1, inplace=True)
+        if("Month" not in df.columns):
+            df.rename({'Unnamed: 1':"Month"}, axis=1, inplace=True)
+        if("Day" not in df.columns):
+            df.rename({'Unnamed: 2':"Day"}, axis=1, inplace=True)
+        if("Time (UTC)" not in df.columns):
+            df.rename({'Unnamed: 3':"Time (UTC)"}, axis=1, inplace=True)
+        df = df[df["Year"] > 2010]
+        df["Hour"] = [x.hour for x in df["Time (UTC)"]]
 
         stem = f.split(".")[0]
+        df["Location"] = stem
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 
 
 def load():
-    client = MongoClient(MONGO_CONNECTION_STRING)
+    client = MongoClient(MONGO_CONNECTION_STRING, timeoutMS=40000)
     col = client[WEATHER_DB][WEATHER_COLLECTION]
 
     csvs = filter(
@@ -55,6 +67,7 @@ def load():
     )
 
     for f in csvs:
+        print("Loading: ", f)
         items = pd.read_csv("/tmp/historical_weather/" + f).to_dict(orient="records")
         col.insert_many(items)
 

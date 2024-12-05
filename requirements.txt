@@ -8,6 +8,7 @@ pandas==2.2.3
 pymongo==4.10.1
 pyproj==3.7.0
 python-dateutil==2.9.0.post0
+scipy==1.14.1
 pytz==2024.2
 six==1.16.0
 tzdata==2024.2

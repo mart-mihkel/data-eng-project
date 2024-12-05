@@ -12,8 +12,8 @@ DATASET_ID = "d43cbb24-f58f-4928-b7ed-1fcec2ef355b"
 FILE_ID = "3c255d23-8fa7-479f-b4bb-9c8c636dbba9"
 
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
-ACCIDENT_DB = "accidents"
-ACCIDENT_COLLECTION = "traffic_accidents"
+ACCIDENT_DB = "dataeng_project"
+ACCIDENT_COLLECTION = "accidents"
 
 COL_MAP = {
     "Juhtumi nr": "Case ID",
@@ -99,7 +99,8 @@ def wrangle():
 
     x, y = transformer.transform(df['X coordinate'], df['Y coordinate'])
     df['X coordinate'], df['Y coordinate'] = x, y
-
+    df["Time of accident"] = pd.to_datetime(df["Time of accident"])
+    df["Year"] = df["Time of accident"].dt.year
     df.to_csv(f"/tmp/{FILE_ID}", index=False)
 
 

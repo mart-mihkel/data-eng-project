@@ -66,9 +66,9 @@ def load():
         os.listdir("/tmp/historical_weather")
     )
 
-    for f in csvs:
-        print("Loading: ", f)
-        items = pd.read_csv(f"/tmp/historical_weather/{f}").to_dict(orient="records")
+    for csv in csvs:
+        print("Loading: ", csv)
+        items = pd.read_csv(f"/tmp/historical_weather/{csv}").to_dict(orient="records")
         col.insert_many(items)
 
 

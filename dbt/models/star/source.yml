@@ -1,0 +1,11 @@
+sources:
+  - name: dbt_source
+    tables:
+      - name: accidents
+        meta:
+          external_location: "read_csv('/tmp/accidents.csv', AUTO_DETECT=TRUE)"
+
+      # TODO: desnity and weather batches sources
+      - name: desnity
+      - name: weather
+

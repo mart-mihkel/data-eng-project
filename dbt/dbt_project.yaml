@@ -1,0 +1,21 @@
+name: "dataeng_project"
+version: "1.0"
+config-version: 2
+
+model-paths: ["models"]
+profile: "duckdb_profile"
+target-path: "target"
+clean-targets: ["target"]
+
+vars:
+  fact_csv: "data/accidents_clean.csv"
+  time_csv: "data/time_dim_clean.csv"
+  weather_csv: "data/weather_clean.csv"
+  location_csv: "data/location_clean.csv"
+  road_csv: "data/road_clean.csv"
+  parties_csv: "data/parties_clean.csv"
+
+models:
+  dataeng_project:
+    marts:
+      materialized: table

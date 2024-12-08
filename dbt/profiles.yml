@@ -1,0 +1,6 @@
+duckdb_profile:
+  outputs:
+    dev:
+      type: duckdb
+      path: "dataeng_project.duckdb"
+  target: dev

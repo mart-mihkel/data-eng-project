@@ -5,29 +5,29 @@ import pandas as pd
 from pymongo import MongoClient
 
 from airflow.models.dag import DAG
+from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
-MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017/?connectTimeoutMS=40000"
-
-DENSITY_DB = "dataeng_project"
-DENSITY_COLLECTION = "density"
+DB = "dataeng_project"
+COLLECTION = "density"
+MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 
 COL_MAP = {
-    "Mnt nr": "Road No",
-    "Maantee nimetus": "Road Name",
-    "Algus m": "Start (m)",
-    "Lõpp m": "End (m)",
-    "Pikkus m": "Length (m)",
-    "AKÖL autot/ööp": "AADT vehicles/day",
-    "SAPA %": "SAPA %",
-    "VAAB %": "VAAB %",
-    "AR %": "AR %",
-    "SAPA autot/ööp": "SAPA vehicles/day",
-    "VAAB autot/ööp": "VAAB vehicles/day",
-    "AR autot/ööp": "AR vehicles/day",
-    "Loenduse aasta": "Survey Year",
-    "Maakond": "County",
-    "Regioon": "Region"
+    "Mnt nr": "road_number",
+    "Maantee nimetus": "road_name",
+    "Algus m": "start",
+    "Lõpp m": "end",
+    "Pikkus m": "length",
+    "AKÖL autot/ööp": "AADT_vehicles_per_day",
+    "SAPA %": "SAPA",
+    "VAAB %": "VAAB",
+    "AR %": "AR",
+    "SAPA autot/ööp": "SAPA_vehicles_per_day",
+    "VAAB autot/ööp": "VAAB_vehicles_per_day",
+    "AR autot/ööp": "AR_vehicles_per_day",
+    "Loenduse aasta": "survey_year",
+    "Maakond": "county",
+    "Regioon": "region"
 }
 
 
@@ -39,7 +39,7 @@ def extract():
 
 def load():
     client = MongoClient(MONGO_CONNECTION_STRING)
-    col = client[DENSITY_DB][DENSITY_COLLECTION]
+    col = client[DB][COLLECTION]
 
     csvs = filter(
         lambda x: x.endswith("xlsx"), 
@@ -52,15 +52,20 @@ def load():
 
 
 with DAG("traffic_density_etl", catchup=False) as dag:
-    t1 = PythonOperator(
+    extract = PythonOperator(
         task_id="extract_traffic_density",
         python_callable=extract,
     )
 
-    t2 = PythonOperator(
+    load_lake = PythonOperator(
         task_id="load_traffic_density",
         python_callable=load,
     )
 
-    _ = t1 >> t2 
+    cleanup = BashOperator(
+        task_id="traffic_density_cleanup",
+        bash_command="rm -rf /tmp/traffic_density",
+    )
+
+    _ = extract >> load_lake >> cleanup
 

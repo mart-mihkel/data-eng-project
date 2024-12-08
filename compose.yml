@@ -135,7 +135,7 @@ services:
     volumes:
       - ./mnt/streamlit:/app
     ports:
-      - "8501:8501"
+      - 8501:8501
 
   airflow-webserver:
     <<: *airflow-common

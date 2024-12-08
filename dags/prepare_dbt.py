@@ -1,3 +1,4 @@
+import os
 import scipy
 import duckdb
 import numpy as np
@@ -6,15 +7,10 @@ import pandas as pd
 from pymongo import MongoClient
 
 from airflow.models.dag import DAG
+from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
 FACT_TABLE = "accidents"
-FACT_CSV = "accidents_clean.csv"
-TIME_CSV = "time_dim_clean.csv"
-WEATHER_CSV = "weather_clean.csv"
-PARTIES_CSV = "parties_clean.csv"
-LOCATION_CSV = "location_clean.csv"
-ROAD_CSV = "road_clean.csv"
 
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 PROJECT_DB = "dataeng_project"
@@ -23,6 +19,7 @@ DENSITY_COLLECTION = "density"
 ACCIDENT_COLLECTION = "accidents"
 
 DUCK_DB = "duckdb/duck.db"
+
 STATION_COORDS = [
     (58.945278, 23.555278),
     (58.036709, 24.458048),
@@ -52,6 +49,7 @@ STATION_COORDS = [
     (57.846389, 27.019444),
     (59.141389,26.230833)
 ]
+
 STATIONS = np.array([
     "Haapsalu",
     "Haademeeste",
@@ -83,27 +81,35 @@ STATIONS = np.array([
 ])
 
 
-def accident_to_parquet():
+def serialize_accident():
     client = MongoClient(MONGO_CONNECTION_STRING)
     coll = client[PROJECT_DB][ACCIDENT_COLLECTION]
 
-    df = pd.DataFrame(coll.find()).drop(columns=["_id"]).dropna(subset=["X coordinate", "Y coordinate"])
-    _, station_idx = scipy.spatial.KDTree(STATION_COORDS).query(df[["X coordinate", "Y coordinate"]])
+    df = pd.DataFrame(coll.find()).drop(columns=["_id"]).dropna(subset=["x", "y"])
+    _, station_idx = scipy.spatial.KDTree(STATION_COORDS).query(df[["x", "y"]])
     df["nearest_station"] = STATIONS[station_idx]
 
-    df.to_parquet("/tmp/accidents.parquet")
+    df.to_csv("/tmp/accidents.csv")
 
 
-def weather_to_parquet():
+def serialize_weather():
     client = MongoClient(MONGO_CONNECTION_STRING)
     coll = client[PROJECT_DB][WEATHER_COLLECTION]
-    pd.DataFrame(coll.find()).to_parquet("/tmp/weather.parquet")
+
+    batch_size = 100_000
+    total_count = coll.count_documents({})
+
+    for skip in range(0, total_count, batch_size):
+        print(f"Processing weather records {skip} to {skip + batch_size}")
+
+        batch = coll.find().skip(skip).limit(batch_size).to_list()
+        pd.DataFrame(batch).drop(columns=['_id']).to_csv(f"/tmp/weather_batch_{skip}.csv")
 
 
-def density_to_parquet():
+def serialize_density():
     client = MongoClient(MONGO_CONNECTION_STRING)
     coll = client[PROJECT_DB][DENSITY_COLLECTION]
-    pd.DataFrame(coll.find()).to_parquet("/tmp/weather.parquet")
+    pd.DataFrame(coll.find()).drop(columns=['_id']).to_csv("/tmp/density.csv")
 
 
 def create_schema():
@@ -177,49 +183,35 @@ def create_schema():
         )""")
 
 
-def load_dimensions():
-    con = duckdb.connect(DUCK_DB)
-    con.sql(f"INSERT INTO road_dim SELECT * FROM {ROAD_CSV}")
-    con.sql(f"INSERT INTO time_dim SELECT * FROM {TIME_CSV}")
-    con.sql(f"INSERT INTO location_dim SELECT * FROM {LOCATION_CSV}")
-    con.sql(f"INSERT INTO weather_dim SELECT * FROM {WEATHER_CSV}")
-    con.sql(f"INSERT INTO parties_dim SELECT * FROM {PARTIES_CSV}")
-
-
-def load_facts():
-    con = duckdb.connect(DUCK_DB)
-    con.sql(f"INSERT INTO {FACT_TABLE} SELECT * FROM {FACT_CSV}")
-
-
 with DAG("transformation_etl", catchup=False) as dag:
-    extract_accidents = PythonOperator(
+    prepare_accidents = PythonOperator(
         task_id="extract_accident_data_from_lake",
-        python_callable=accident_to_parquet,
+        python_callable=serialize_accident,
     )
 
-    extact_weather = PythonOperator(
+    prepare_weather = PythonOperator(
         task_id="extract_weather_data_from_lake",
-        python_callable=weather_to_parquet,
+        python_callable=serialize_weather,
     )
 
-    extract_density = PythonOperator(
+    prepare_density = PythonOperator(
         task_id="extract_density_data_from_lake",
-        python_callable=density_to_parquet,
+        python_callable=serialize_density,
     )
 
-    t2 = PythonOperator(
+    prepare_schema = PythonOperator(
         task_id="create_star_schema",
         python_callable=create_schema,
     )
 
-    # t3 = PythonOperator(
-    #     task_id="load_dimensions",
-    #     python_callable=load_dimensions,
-    # )
-    #
-    # t4 = PythonOperator(
-    #     task_id="load_facts",
-    #     python_callable=load_facts,
-    # )
-    #
-    _ = [extract_accidents, extact_weather, extract_density] >> t2 # >> t3 >> t4
+    dbt = BashOperator(
+        task_id="dbt_tranform",
+        bash_command=f"dbt ...", # TODO
+    )
+
+    cleanup = BashOperator(
+        task_id="cleanup",
+        bash_command=f"rm -f /tmp/accidents.parquet /tmp/weather.parquet /tmp/density.parquet",
+    )
+
+    _ = [prepare_accidents, prepare_weather, prepare_density] >> prepare_schema >> dbt >> cleanup

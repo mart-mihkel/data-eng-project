@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-import pymongo
+
 from pymongo import MongoClient
 
 from airflow.models.dag import DAG
@@ -68,7 +68,7 @@ def load():
 
     for f in csvs:
         print("Loading: ", f)
-        items = pd.read_csv("/tmp/historical_weather/" + f).to_dict(orient="records")
+        items = pd.read_csv(f"/tmp/historical_weather/{f}").to_dict(orient="records")
         col.insert_many(items)
 
 

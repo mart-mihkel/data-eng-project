@@ -1,6 +1,5 @@
 import os
 import scipy
-import duckdb
 import numpy as np
 import pandas as pd
 
@@ -10,15 +9,12 @@ from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
-FACT_TABLE = "accidents"
-
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 PROJECT_DB = "dataeng_project"
+
 WEATHER_COLLECTION = "weather"
 DENSITY_COLLECTION = "density"
 ACCIDENT_COLLECTION = "accidents"
-
-DUCK_DB = "duckdb/duck.db"
 
 STATION_COORDS = [
     (58.945278, 23.555278),
@@ -89,12 +85,14 @@ def serialize_accident():
     _, station_idx = scipy.spatial.KDTree(STATION_COORDS).query(df[["x", "y"]])
     df["nearest_station"] = STATIONS[station_idx]
 
-    df.to_csv("/tmp/accidents.csv")
+    df.to_csv(f"/tmp/{ACCIDENT_COLLECTION}.csv")
 
 
 def serialize_weather():
     client = MongoClient(MONGO_CONNECTION_STRING)
     coll = client[PROJECT_DB][WEATHER_COLLECTION]
+
+    os.makedirs(f"/tmp/{WEATHER_COLLECTION}", exist_ok=True)
 
     batch_size = 100_000
     total_count = coll.count_documents({})
@@ -103,87 +101,19 @@ def serialize_weather():
         print(f"Processing weather records {skip} to {skip + batch_size}")
 
         batch = coll.find().skip(skip).limit(batch_size).to_list()
-        pd.DataFrame(batch).drop(columns=['_id']).to_csv(f"/tmp/weather_batch_{skip}.csv")
+        batch_df = pd.DataFrame(batch).drop(columns=['_id'])
+        batch_df.to_csv(f"/tmp/{WEATHER_COLLECTION}/batch_{skip // batch_size}.csv")
 
 
 def serialize_density():
     client = MongoClient(MONGO_CONNECTION_STRING)
     coll = client[PROJECT_DB][DENSITY_COLLECTION]
-    pd.DataFrame(coll.find()).drop(columns=['_id']).to_csv("/tmp/density.csv")
+
+    df = pd.DataFrame(coll.find()).drop(columns=['_id'])
+    df.to_csv(f"/tmp/{DENSITY_COLLECTION}.csv")
 
 
-def create_schema():
-    con = duckdb.connect(DUCK_DB)
-
-    con.sql("""
-        CREATE TABLE IF NOT EXISTS time_dim as (
-            time_id                 INTEGER PRIMARY KEY,
-            season                  VARCHAR,
-            day_of_the_week         INTEGER,
-            time_of_day             VARCHAR
-        )""")
-
-    con.sql("""
-        CREATE TABLE IF NOT EXISTS location_dim as (
-            location_id             INTEGER PRIMARY KEY, 
-            gps_x                   DOUBLE,
-            gps_y                   DOUBLE,
-            urban                   BOOLEAN,
-            country                 VARCHAR, 
-            municipality            VARCHAR
-        )""")
-
-    con.sql("""
-        CREATE TABLE IF NOT EXISTS weather_dim as (
-            weather_id              INTEGER PRIMARY KEY,
-            precipitation           INTEGER,
-            temperature             INTEGER,
-            snow_depth              INTEGER,
-            relative_humidity       INTEGER,
-            weather_code            INTEGER
-        )""")
-
-    con.sql("""
-        CREATE TABLE IF NOT EXISTS road_dim as (
-            road_id                 INTEGER PRIMARY KEY,
-            road_geometry           VARCHAR,
-            road_state_of_repair    VARCHAR,
-            max_speed               INTEGER,
-            highway_number          INTEGER,
-            highway_km              DOUBLE,
-            highway_cars_per_day    INTEGER
-        )""")
-
-    con.sql("""
-        CREATE TABLE IF NOT EXISTS parties_dim as (
-            parties_id CREATE                       INTEGER PRIMARY KEY,
-            any_motor_vehicle_involved              BOOLEAN,
-            cars_involved                           BOOLEAN,
-            pedestrians_involved                    BOOLEAN,
-            low_speed_vehicles_involved             BOOLEAN,
-            elderly_driver_involved                 BOOLEAN,
-            public_transportation_vehicle_involved  BOOLEAN,
-            truck_involved                          BOOLEAN,
-            motorcycle_involved                     BOOLEAN
-        )""")
-
-    con.sql(f"""
-        CREATE TABLE IF NOT EXISTS {FACT_TABLE} as (
-            id                          INTEGER PRIMARY KEY, 
-            FOREIGN KEY (time_id)       REFERENCES time_dim (time_id),
-            FOREIGN KEY (location_id)   REFERENCES location_dim (location_id), 
-            FOREIGN KEY (weather_id)    REFERENCES weather_dim (weather_id), 
-            FOREIGN KEY (parties_id)    REFERENCES parties_dim (parties_id),
-            FOREIGN KEY (road_id)       REFERENCES road_dim (road_id),
-            happened_at                 TIMESTAMP,
-            number_of_people            INTEGER,
-            number_of_vehicles          INTEGER,
-            number_of_fatalities        INTEGER,
-            number_of_injured           INTEGER
-        )""")
-
-
-with DAG("transformation_etl", catchup=False) as dag:
+with DAG("transformation_dbt", catchup=False) as dag:
     prepare_accidents = PythonOperator(
         task_id="extract_accident_data_from_lake",
         python_callable=serialize_accident,
@@ -199,19 +129,14 @@ with DAG("transformation_etl", catchup=False) as dag:
         python_callable=serialize_density,
     )
 
-    prepare_schema = PythonOperator(
-        task_id="create_star_schema",
-        python_callable=create_schema,
-    )
-
     dbt = BashOperator(
         task_id="dbt_tranform",
-        bash_command=f"dbt ...", # TODO
+        bash_command=f"echo '!!! TODO: IMPLEMENT DBT !!!'", # TODO: implement dbt
     )
 
     cleanup = BashOperator(
         task_id="cleanup",
-        bash_command=f"rm -f /tmp/accidents.parquet /tmp/weather.parquet /tmp/density.parquet",
+        bash_command=f"rm -rf /tmp/{ACCIDENT_COLLECTION}.csv /tmp/{DENSITY_COLLECTION}.csv /tmp/{WEATHER_COLLECTION}.csv",
     )
 
-    _ = [prepare_accidents, prepare_weather, prepare_density] >> prepare_schema >> dbt >> cleanup
+    _ = [prepare_accidents, prepare_weather, prepare_density] >> dbt >> cleanup

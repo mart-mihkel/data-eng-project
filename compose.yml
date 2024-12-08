@@ -129,11 +129,20 @@ services:
       - mongo-db-volume:/data
     restart: always
 
+  dbt:
+    build:
+      context: ./dbt
+    volumes:
+      - ${AIRFLOW_PROJ_DIR:-.}/duckdb:/duckdb
+      - ./dbt:/app
+    restart: always
+
   streamlit:
     build:
       context: ./streamlit
     volumes:
-      - ./mnt/streamlit:/app
+      - ${AIRFLOW_PROJ_DIR:-.}/duckdb:/duckdb
+      - ./streamlit/app:/app
     ports:
       - 8501:8501
 

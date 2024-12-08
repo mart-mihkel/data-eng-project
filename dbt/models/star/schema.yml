@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: time_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: season
+      - name: day_of_week
+      - name: time_of_day
+
+  - name: location_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: gps_x
+      - name: gps_y
+      - name: urban
+      - name: country
+      - name: municipality
+
+  - name: weather_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: precipitation
+      - name: temperature
+      - name: snow_depth
+      - name: relative_humidity
+      - name: weather_code
+
+  - name: road_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: road_geometry
+      - name: road_state_of_repair
+      - name: speed_limit
+      - name: highway_number
+      - name: highway_km
+      - name: highway_cars_per_day
+
+  - name: parties_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: road_geometry
+      - name: road_state_of_repair
+      - name: speed_limit
+      - name: highway_number
+      - name: highway_km
+      - name: highway_cars_per_day
+      - name: cars_involved
+      - name: pedestrians_involved
+      - name: low_speed_vehicles_involved
+      - name: elderly_driver_involved
+      - name: public_transportation_vehicle_involved
+      - name: truck_involved
+      - name: motorcycle_involved
+
+  - name: accident_fact
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: time_id
+      - name: location_id
+      - name: weather_id
+      - name: parties_id
+      - name: road_id
+      - name: happened_at
+      - name: number_people
+      - name: number_vehicles
+      - name: number_fatalities
+      - name: number_injured
+

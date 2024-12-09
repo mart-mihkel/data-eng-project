@@ -1,13 +1,13 @@
 SELECT
-        case_id as id,
-        case_id as time_id,
-        case_id as location_id,
-        case_id as weather_id,
-        case_id as parties_id,
-        case_id as road_id,
-        time as happened_at,
-        num_people as number_of_people,
-        num_vehicles as number_of_vehicles,
-        num_dead as number_of_fatalities,
-        num_injured as number_of_injured
+        case_id AS id,
+        case_id AS time_id,
+        case_id AS location_id,
+        case_id AS weather_id,
+        case_id AS parties_id,
+        case_id AS road_id,
+        time AS happened_at,
+        num_people AS number_of_people,
+        num_vehicles AS number_of_vehicles,
+        num_dead AS uumber_of_fatalities,
+        num_injured AS number_of_injured
 FROM accidents_tmp

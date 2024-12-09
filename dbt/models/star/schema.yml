@@ -20,7 +20,7 @@ models:
       - name: gps_x
       - name: gps_y
       - name: urban
-      - name: country
+      - name: county
       - name: municipality
 
   - name: weather_dim

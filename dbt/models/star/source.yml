@@ -6,7 +6,12 @@ sources:
         meta:
           external_location: "read_csv('/tmp/accidents.csv', AUTO_DETECT=TRUE)"
 
-      # TODO: desnity and weather batches sources
       - name: desnity
+        meta:
+          external_location: "read_csv('/tmp/density.csv', AUTO_DETECT=TRUE)"
+
+      # TODO: weather has batches sources
       - name: weather
+        meta:
+          external_location: "read_csv('/tmp/weather.csv', AUTO_DETECT=TRUE)"
 

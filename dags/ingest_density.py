@@ -13,21 +13,24 @@ COLLECTION = "density"
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 
 COL_MAP = {
-    "Mnt nr": "road_number",
-    "Maantee nimetus": "road_name",
-    "Algus m": "start",
-    "Lõpp m": "end",
-    "Pikkus m": "length",
-    "AKÖL autot/ööp": "AADT_vehicles_per_day",
+    "Road No": "road_number",
+    "Road Name": "road_name",
+    "Start (m)": "start",
+    "End (m)": "end",
+    "Length (m)": "length",
+    "AADT vehicles/day": "AADT_vehicles_per_day",
     "SAPA %": "SAPA",
     "VAAB %": "VAAB",
     "AR %": "AR",
-    "SAPA autot/ööp": "SAPA_vehicles_per_day",
-    "VAAB autot/ööp": "VAAB_vehicles_per_day",
-    "AR autot/ööp": "AR_vehicles_per_day",
-    "Loenduse aasta": "survey_year",
-    "Maakond": "county",
-    "Regioon": "region"
+    "SAPA vehicles/day": "SAPA_vehicles_per_day",
+    "VAAB vehicles/day": "VAAB_vehicles_per_day",
+    "AR vehicles/day": "AR_vehicles_per_day",
+    "Läbisõit SAPA": "SAPA_mileage",
+    "Loenduse liik": "survey_type",
+    "Survey Year": "survey_year",
+    "Source Sheet": "source_sheet",
+    "County": "county",
+    "Region": "region",
 }
 
 
@@ -41,18 +44,21 @@ def load():
     client = MongoClient(MONGO_CONNECTION_STRING)
     col = client[DB][COLLECTION]
 
-    csvs = filter(
+    xlsxs = filter(
         lambda x: x.endswith("xlsx"), 
         os.listdir("/tmp/traffic_density")
     )
 
-    for f in csvs:
-        items = pd.read_excel(f"/tmp/traffic_density/{f}").to_dict(orient="records")
+    for f in xlsxs:
+        df = pd.read_excel(f"/tmp/traffic_density/{f}")
+        df = df.rename(columns=COL_MAP)
+
+        items = df.to_dict(orient="records")
         col.insert_many(items)
 
 
 with DAG("traffic_density_etl", catchup=False) as dag:
-    extract = PythonOperator(
+    extract_task = PythonOperator(
         task_id="extract_traffic_density",
         python_callable=extract,
     )
@@ -67,5 +73,5 @@ with DAG("traffic_density_etl", catchup=False) as dag:
         bash_command="rm -rf /tmp/traffic_density",
     )
 
-    _ = extract >> load_lake >> cleanup
+    _ = extract_task >> load_lake >> cleanup
 

@@ -1,4 +1,6 @@
 import requests
+import scipy as sp
+import numpy as np
 import pandas as pd
 
 from pyproj import Transformer
@@ -74,6 +76,66 @@ COL_MAP = {
     "Y koordinaat": "y"
 }
 
+STATION_COORDS = [
+    (58.945278, 23.555278),
+    (58.036709, 24.458048),
+    (58.749722, 26.415),
+    (59.328889, 27.398333),
+    (58.098611, 23.970278),
+    (59.521389, 26.541389),
+    (58.973056, 24.733889),
+    (58.951111, 23.815556),
+    (59.389444, 28.109167),
+    (59.389444, 24.04),
+    (58.384567, 24.485197),
+    (58.404567, 24.505197),
+    (58.920833, 22.066389),
+    (58.218056, 22.506389),
+    (57.783333, 23.258889),
+    (57.913611, 22.058056),
+    (59.398056, 24.602778),
+    (58.264167, 26.461389),
+    (58.865278, 26.952222),
+    (58.872778, 26.272778),
+    (58.808611, 25.409167),
+    (57.79, 26.037778),
+    (58.377778, 25.600278),
+    (58.382778, 21.814167),
+    (58.572778, 23.513611),
+    (57.846389, 27.019444),
+    (59.141389,26.230833)
+]
+
+STATIONS = np.array([
+    "Haapsalu",
+    "Haademeeste",
+    "Jogeva",
+    "Johvi",
+    "Kihnu",
+    "Kunda",
+    "Kuusiku",
+    "Laane-Nigula",
+    "Narva",
+    "Pakri",
+    "Parnu",
+    "Parnu-Sauga",
+    "Ristna",
+    "Roomassaare",
+    "Ruhnu",
+    "Sorve",
+    "Tallinn-Harku",
+    "Tartu-Toravere",
+    "Tiirikoja",
+    "Tooma",
+    "Turi",
+    "Valga",
+    "Viljandi",
+    "Vilsandi",
+    "Virtsu",
+    "Voru",
+    "Vaike-Maarja"
+])
+
 
 def extract():
     url = f"{API}/datasets/{DATASET_ID}/files/{FILE_ID}"
@@ -93,6 +155,7 @@ def extract():
 def wrangle():
     df = pd.read_csv(f"/tmp/{FILE_ID}")
     df = df.rename(columns=COL_MAP)
+    df = df.dropna(subset=["x", "y"])
 
     original_crs_epsg = 3301
     target_crs_epsg = 4326
@@ -101,8 +164,27 @@ def wrangle():
     x, y = transformer.transform(df["x"], df["y"])
     df["x"], df["y"] = x, y
 
+    _, station_idx = sp.spatial.KDTree(STATION_COORDS).query(df[["x", "y"]])
+    df["nearest_station"] = STATIONS[station_idx]
+
+    def to_season(date):
+        time_tuple = (date.month, date.day)
+        if time_tuple > (12,20) or time_tuple < (3,20):
+            return "Winter"
+        elif time_tuple > (9,23):
+            return "Fall"
+        elif time_tuple > (6,21):
+            return "Summer"
+        else:
+            return "Spring"
+
     df["time"] = pd.to_datetime(df["time"])
     df["year"] = df["time"].dt.year
+    df["month"] = df["time"].dt.moth
+    df["day"] = df["time"].dt.day
+    df["weekday"] = df["time"].dt.weekday
+    df["season"] = df["time"].map(to_season)
+    df["urban"] = df["is_settlement"].to_numpy() == "JAH"
 
     df.to_csv(f"/tmp/{FILE_ID}", index=False)
 

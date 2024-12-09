@@ -98,6 +98,7 @@ def serialize_accident():
 
     df["season"] = df["time"].map(to_season)
     df["time_of_day"] = df["time"].dt.weekday()
+    df["urban"] = df["is_settlement"].to_numpy() == "JAH"
 
     df.to_csv(f"/mnt/{ACCIDENT_COLLECTION}.csv")
 

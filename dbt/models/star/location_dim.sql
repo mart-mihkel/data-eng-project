@@ -1,5 +1,3 @@
-WITH accidents AS {{ source('dbt_source', 'accidents') }}
-
 SELECT
         case_id as id,
         county,
@@ -8,4 +6,4 @@ SELECT
         village,
         x AS gps_x,
         y AS gps_y
-FROM accidents
+FROM accidents_tmp

@@ -135,7 +135,6 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}/duckdb:/duckdb
       - ./dbt:/app
-      - ./mnt:/mnt
     restart: always
 
   streamlit:

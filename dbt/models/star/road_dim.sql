@@ -1,6 +1,3 @@
-WITH accidents AS {{ source('dbt_source', 'accidents') }}
-WITH density AS {{ source('dbt_source', 'accidents') }}
-
 SELECT
         a.case_id as id,
         a.road_hill_type as road_geometry,
@@ -10,5 +7,5 @@ SELECT
         a.road_kilometer as highway_km,
         a.road_number as highway_number,
         d.AADT_vehicles_per_day as highway_cars_per_day
-FROM accidents AS a
-LEFT JOIN density AS d ON d.road_number = a.road_number
+FROM accidents_tmp AS a
+LEFT JOIN density_tmp AS d ON d.road_number = a.road_number

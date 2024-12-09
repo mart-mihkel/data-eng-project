@@ -1,4 +1,4 @@
-dbt_duckdb:
+duckdb:
   target: dev
   outputs:
     dev:

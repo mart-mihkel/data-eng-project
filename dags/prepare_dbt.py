@@ -1,5 +1,5 @@
-import os
 import scipy
+import duckdb
 import numpy as np
 import pandas as pd
 
@@ -11,6 +11,7 @@ from airflow.operators.python import PythonOperator
 
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 PROJECT_DB = "dataeng_project"
+DUCK_DB = "duckdb/duck.db"
 
 WEATHER_COLLECTION = "weather"
 DENSITY_COLLECTION = "density"
@@ -78,10 +79,11 @@ STATIONS = np.array([
 
 
 def serialize_accident():
-    client = MongoClient(MONGO_CONNECTION_STRING)
-    coll = client[PROJECT_DB][ACCIDENT_COLLECTION]
+    duck_client = duckdb.connect(DUCK_DB)
+    mongo_client = MongoClient(MONGO_CONNECTION_STRING)
+    coll = mongo_client[PROJECT_DB][ACCIDENT_COLLECTION]
 
-    df = pd.DataFrame(coll.find()).drop(columns=["_id"]).dropna(subset=["x", "y"])
+    df = pd.DataFrame(coll.find()).dropna(subset=["x", "y"])
     _, station_idx = scipy.spatial.KDTree(STATION_COORDS).query(df[["x", "y"]])
     df["nearest_station"] = STATIONS[station_idx]
 
@@ -96,36 +98,57 @@ def serialize_accident():
         else:
             return "Spring"
 
+    df["time"] = pd.to_datetime(df["time"])
     df["season"] = df["time"].map(to_season)
-    df["time_of_day"] = df["time"].dt.weekday()
+    df["weekday"] = df["time"].dt.weekday
     df["urban"] = df["is_settlement"].to_numpy() == "JAH"
 
-    df.to_csv(f"/mnt/{ACCIDENT_COLLECTION}.csv")
+    duck_client.sql("DROP TABLE IF EXISTS accidents_tmp")
+    duck_client.sql("CREATE TABLE accidents_tmp AS SELECT * FROM df")
 
 
 def serialize_weather():
-    client = MongoClient(MONGO_CONNECTION_STRING)
-    coll = client[PROJECT_DB][WEATHER_COLLECTION]
-
-    os.makedirs(f"/mnt/{WEATHER_COLLECTION}", exist_ok=True)
+    duck_client = duckdb.connect(DUCK_DB)
+    mongo_client = MongoClient(MONGO_CONNECTION_STRING)
+    coll = mongo_client[PROJECT_DB][WEATHER_COLLECTION]
 
     batch_size = 100_000
     total_count = coll.count_documents({})
 
-    for skip in range(0, total_count, batch_size):
+    batch = coll.find().limit(batch_size).to_list()
+    batch_df = pd.DataFrame(batch)
+
+    duck_client.sql("DROP TABLE IF EXISTS weather_tmp")
+    duck_client.sql("CREATE TABLE weather_tmp AS SELECT * FROM batch_df")
+
+    for skip in range(batch_size, total_count, batch_size):
         print(f"Processing weather records {skip} to {skip + batch_size}")
 
         batch = coll.find().skip(skip).limit(batch_size).to_list()
-        batch_df = pd.DataFrame(batch).drop(columns=['_id'])
-        batch_df.to_csv(f"/mnt/{WEATHER_COLLECTION}/batch_{skip // batch_size}.csv")
+        batch_df = pd.DataFrame(batch)
+
+        duck_client.sql("INSERT INTO weather_tmp SELECT * FROM batch_df")
+
 
 
 def serialize_density():
-    client = MongoClient(MONGO_CONNECTION_STRING)
-    coll = client[PROJECT_DB][DENSITY_COLLECTION]
+    duck_client = duckdb.connect(DUCK_DB)
+    mongo_client = MongoClient(MONGO_CONNECTION_STRING)
+    coll = mongo_client[PROJECT_DB][DENSITY_COLLECTION]
 
-    df = pd.DataFrame(coll.find()).drop(columns=['_id'])
-    df.to_csv(f"/mnt/{DENSITY_COLLECTION}.csv")
+    df = pd.DataFrame(coll.find())
+
+    duck_client.sql("DROP TABLE IF EXISTS density_tmp")
+    duck_client.sql("CREATE TABLE density_tmp AS SELECT * FROM df")
+
+
+def cleanup():
+    duck_client = duckdb.connect(DUCK_DB)
+
+    # TODO: uncomment when done testing
+    # duck_client.sql("DROP TABLE accidents_tmp")
+    # duck_client.sql("DROP TABLE weather_tmp")
+    # duck_client.sql("DROP TABLE density_tmp")
 
 
 with DAG("transformation_dbt", catchup=False) as dag:
@@ -149,9 +172,9 @@ with DAG("transformation_dbt", catchup=False) as dag:
         bash_command=f"echo '!!! TODO: IMPLEMENT DBT !!!'", # TODO: implement dbt
     )
 
-    cleanup = BashOperator(
+    cleanup_task = PythonOperator(
         task_id="cleanup",
-        bash_command=f"rm -rf /mnt/{ACCIDENT_COLLECTION}.csv /mnt/{DENSITY_COLLECTION}.csv /mnt/{WEATHER_COLLECTION}.csv",
+        python_callable=cleanup,
     )
 
-    _ = [prepare_accidents, prepare_weather, prepare_density] >> dbt >> cleanup
+    _ = prepare_accidents >> prepare_density >> prepare_weather >> dbt >> cleanup_task

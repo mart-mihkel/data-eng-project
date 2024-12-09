@@ -180,7 +180,7 @@ def wrangle():
 
     df["time"] = pd.to_datetime(df["time"])
     df["year"] = df["time"].dt.year
-    df["month"] = df["time"].dt.moth
+    df["month"] = df["time"].dt.month
     df["day"] = df["time"].dt.day
     df["weekday"] = df["time"].dt.weekday
     df["season"] = df["time"].map(to_season)

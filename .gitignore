@@ -8,3 +8,5 @@ __pycache__
 logs
 
 .DS_Store
+
+duckdb/duck.db

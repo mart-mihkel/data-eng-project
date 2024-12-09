@@ -8,8 +8,10 @@ models:
           - unique
           - not_null
       - name: season
-      - name: day_of_week
-      - name: time_of_day
+      - name: year
+      - name: month
+      - name: day
+      - name: weekday
 
   - name: location_dim
     columns:

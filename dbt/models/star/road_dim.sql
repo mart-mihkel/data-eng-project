@@ -8,4 +8,6 @@ SELECT
         a.road_number as highway_number,
         d.AADT_vehicles_per_day as highway_cars_per_day
 FROM accidents_tmp AS a
-LEFT JOIN density AS d ON d.road_number = a.road_number AND a.road_kilometer*1000 BETWEEN d.start AND d.end
+LEFT JOIN density AS d
+        ON d.road_number = a.road_number 
+        AND a.road_kilometer*1000 BETWEEN d.start AND d.end

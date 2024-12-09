@@ -85,6 +85,24 @@ def serialize_accident():
     _, station_idx = scipy.spatial.KDTree(STATION_COORDS).query(df[["x", "y"]])
     df["nearest_station"] = STATIONS[station_idx]
 
+    spring = range(80, 172)
+    summer = range(172, 264)
+    fall = range(264, 355)
+    
+    def to_season(date):
+      time_tuple = (date.month, date.day)
+      if(time_tuple > (12,20) or time_tuple < (3,20):
+        return "Winter"
+      elif(time_tuple > (9,23):
+        return "Fall"
+      elif(time_tuple > (6,21):
+        return "Summer"
+      else:
+        return "Spring"
+
+    df["season"] = df["time"].map(to_season)
+    df["time_of_day"] = df["time"].dt.weekday()
+
     df.to_csv(f"/tmp/{ACCIDENT_COLLECTION}.csv")
 
 

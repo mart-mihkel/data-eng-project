@@ -21,7 +21,7 @@ COL_MAP = {
     "Toimumisaeg": "time",
     "Isikuid": "num_people",
     "Hukkunuid": "num_dead",
-    "Sõidukeid": "num_vechiles",
+    "Sõidukeid": "num_vehicles",
     "Vigastatuid": "num_injured",
     "Aadress": "address",
     "Tänav": "street",

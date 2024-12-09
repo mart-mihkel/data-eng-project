@@ -6,5 +6,5 @@ SELECT
         commune AS municipality,
         village,
         x AS gps_x,
-        y AS gps_y 
+        y AS gps_y
 FROM accidents

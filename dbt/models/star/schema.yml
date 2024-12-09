@@ -31,9 +31,8 @@ models:
           - not_null
       - name: precipitation
       - name: temperature
-      - name: snow_depth
+      - name: wind_speed
       - name: relative_humidity
-      - name: weather_code
 
   - name: road_dim
     columns:
@@ -54,12 +53,7 @@ models:
         data_tests:
           - unique
           - not_null
-      - name: road_geometry
-      - name: road_state_of_repair
-      - name: speed_limit
-      - name: highway_number
-      - name: highway_km
-      - name: highway_cars_per_day
+      - name: any_motor_vehicle_involved
       - name: cars_involved
       - name: pedestrians_involved
       - name: low_speed_vehicles_involved

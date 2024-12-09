@@ -85,32 +85,28 @@ def serialize_accident():
     _, station_idx = scipy.spatial.KDTree(STATION_COORDS).query(df[["x", "y"]])
     df["nearest_station"] = STATIONS[station_idx]
 
-    spring = range(80, 172)
-    summer = range(172, 264)
-    fall = range(264, 355)
-    
     def to_season(date):
-      time_tuple = (date.month, date.day)
-      if(time_tuple > (12,20) or time_tuple < (3,20):
-        return "Winter"
-      elif(time_tuple > (9,23):
-        return "Fall"
-      elif(time_tuple > (6,21):
-        return "Summer"
-      else:
-        return "Spring"
+        time_tuple = (date.month, date.day)
+        if time_tuple > (12,20) or time_tuple < (3,20):
+            return "Winter"
+        elif time_tuple > (9,23):
+            return "Fall"
+        elif time_tuple > (6,21):
+            return "Summer"
+        else:
+            return "Spring"
 
     df["season"] = df["time"].map(to_season)
     df["time_of_day"] = df["time"].dt.weekday()
 
-    df.to_csv(f"/tmp/{ACCIDENT_COLLECTION}.csv")
+    df.to_csv(f"/mnt/{ACCIDENT_COLLECTION}.csv")
 
 
 def serialize_weather():
     client = MongoClient(MONGO_CONNECTION_STRING)
     coll = client[PROJECT_DB][WEATHER_COLLECTION]
 
-    os.makedirs(f"/tmp/{WEATHER_COLLECTION}", exist_ok=True)
+    os.makedirs(f"/mnt/{WEATHER_COLLECTION}", exist_ok=True)
 
     batch_size = 100_000
     total_count = coll.count_documents({})
@@ -120,7 +116,7 @@ def serialize_weather():
 
         batch = coll.find().skip(skip).limit(batch_size).to_list()
         batch_df = pd.DataFrame(batch).drop(columns=['_id'])
-        batch_df.to_csv(f"/tmp/{WEATHER_COLLECTION}/batch_{skip // batch_size}.csv")
+        batch_df.to_csv(f"/mnt/{WEATHER_COLLECTION}/batch_{skip // batch_size}.csv")
 
 
 def serialize_density():
@@ -128,7 +124,7 @@ def serialize_density():
     coll = client[PROJECT_DB][DENSITY_COLLECTION]
 
     df = pd.DataFrame(coll.find()).drop(columns=['_id'])
-    df.to_csv(f"/tmp/{DENSITY_COLLECTION}.csv")
+    df.to_csv(f"/mnt/{DENSITY_COLLECTION}.csv")
 
 
 with DAG("transformation_dbt", catchup=False) as dag:
@@ -154,7 +150,7 @@ with DAG("transformation_dbt", catchup=False) as dag:
 
     cleanup = BashOperator(
         task_id="cleanup",
-        bash_command=f"rm -rf /tmp/{ACCIDENT_COLLECTION}.csv /tmp/{DENSITY_COLLECTION}.csv /tmp/{WEATHER_COLLECTION}.csv",
+        bash_command=f"rm -rf /mnt/{ACCIDENT_COLLECTION}.csv /mnt/{DENSITY_COLLECTION}.csv /mnt/{WEATHER_COLLECTION}.csv",
     )
 
     _ = [prepare_accidents, prepare_weather, prepare_density] >> dbt >> cleanup

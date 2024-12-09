@@ -118,12 +118,12 @@ def load():
 
 
 with DAG("traffic_accidents_etl", catchup=False) as dag:
-    extract = PythonOperator(
+    extract_task = PythonOperator(
         task_id="extract_traffic_accidents",
         python_callable=extract,
     )
 
-    wrangle = PythonOperator(
+    wrangle_task = PythonOperator(
         task_id="preporcess_traffic_accidents",
         python_callable=wrangle,
     )
@@ -138,5 +138,5 @@ with DAG("traffic_accidents_etl", catchup=False) as dag:
         bash_command=f"rm -f /tmp/{FILE_ID}",
     )
 
-    _ = extract >> wrangle >> load_lake >> cleanup
+    _ = extract_task >> wrangle_task >> load_lake >> cleanup
 

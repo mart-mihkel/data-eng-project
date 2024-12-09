@@ -4,14 +4,14 @@ sources:
       # TODO: get the csv files from airflow-worker
       - name: accidents
         meta:
-          external_location: "read_csv('/tmp/accidents.csv', AUTO_DETECT=TRUE)"
+          external_location: "read_csv('/mnt/accidents.csv', AUTO_DETECT=TRUE)"
 
       - name: desnity
         meta:
-          external_location: "read_csv('/tmp/density.csv', AUTO_DETECT=TRUE)"
+          external_location: "read_csv('/mnt/density.csv', AUTO_DETECT=TRUE)"
 
       # TODO: weather has batches sources
       - name: weather
         meta:
-          external_location: "read_csv('/tmp/weather.csv', AUTO_DETECT=TRUE)"
+          external_location: "read_csv('/mnt/weather.csv', AUTO_DETECT=TRUE)"
 

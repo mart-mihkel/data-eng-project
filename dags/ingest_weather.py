@@ -41,6 +41,10 @@ def wrangle():
         df = pd.read_excel(f"/tmp/historical_weather/{f}", header=2)
         df = df.rename(columns=COL_MAP)
 
+        # Removes columns not in column map
+        if(len(df.columns) != len(COL_MAP.values())):
+            df = df.drop(columns = df.columns.difference(COL_MAP.values()))
+
         stem = f.split(".")[0]
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 
@@ -50,7 +54,7 @@ def load():
     col = client[DB][COLLECTION]
 
     csvs = filter(
-        lambda x: x.endswith("csv"), 
+        lambda x: x.endswith("csv"),
         os.listdir("/tmp/historical_weather")
     )
 

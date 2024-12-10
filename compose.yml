@@ -78,6 +78,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/duckdb:/opt/airflow/duckdb
+    - ${AIRFLOW_PROJ_DIR:-.}/dbt:/opt/airflow/dbt
     - ./mnt:/mnt
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
@@ -127,14 +128,6 @@ services:
       - 27018:27018
     volumes:
       - mongo-db-volume:/data
-    restart: always
-
-  dbt:
-    build:
-      context: ./dbt
-    volumes:
-      - ${AIRFLOW_PROJ_DIR:-.}/duckdb:/duckdb
-      - ./dbt:/app
     restart: always
 
   streamlit:

@@ -90,7 +90,7 @@ with DAG("transformation_dbt", catchup=False) as dag:
 
     dbt = BashOperator(
         task_id="dbt_tranform",
-        bash_command=f"echo '!!! TODO: IMPLEMENT DBT !!!'", # TODO: implement dbt
+        bash_command=f"cd /opt/airflow/dbt && dbt compile && dbt run",
     )
 
     cleanup_task = PythonOperator(

@@ -43,6 +43,7 @@ def wrangle():
             df = df.drop(columns = df.columns.difference(COL_MAP.values()))
 
         stem = f.split(".")[0]
+        df["station"] = stem
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 
 

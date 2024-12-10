@@ -19,14 +19,11 @@ COL_MAP = {
     "Õhutemperatuur °C": "air_temperature",
     "Tunni miinimum õhutemperatuur °C": "hourly_min_air_temperature",
     "Tunni maksimum õhutemperatuur °C": "hourly_max_air_temperature",
-    "10 minuti keskmine tuule suund °": "10_min_average_wind_direction",
     "10 minuti keskmine tuule kiirus m/s": "10_min_average_wind_speed",
     "Tunni maksimum tuule kiirus m/s": "hourly_maximum_wind_speed",
-    "Õhurõhk merepinna kõrgusel hPa": "air_pressure_at_sea_level",
     "Tunni sademete summa mm": "hourly_precipitation_total",
     "Õhurõhk jaama kõrgusel hPa": "air_pressure_at_station_height",
-    "Suhteline õhuniiskus %": "relative_humidity",
-    "Tunni keskmine summaarne kiirgus W/m²": "hourly_average_total_radiation"
+    "Suhteline õhuniiskus %": "relative_humidity"
 }
 
 

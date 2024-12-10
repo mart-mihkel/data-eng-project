@@ -5,5 +5,6 @@ pandas
 duckdb
 pyproj
 pymongo
+openpyxl
 dbt-core
 dbt-duckdb

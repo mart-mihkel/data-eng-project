@@ -3,7 +3,7 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
-from plotnine import * # TODO: only import what's needed
+from plotnine import ggplot, aes, facet_wrap, geom_histogram
 
 DUCKDB = "duckdb/duck.db"
 YEAR_QUERY = "SELECT DISTINCT year FROM time_dim ORDER BY year"
@@ -19,9 +19,7 @@ def prepare_filters() -> dict[str, list | tuple]:
 
     years = con.sql(YEAR_QUERY).fetchall()
     seasons = ['Winter', 'Fall', 'Summer', 'Spring']
-    is_weekday = [True, False]
     counties = con.sql(COUNTY_QUERY).fetchall()
-    is_urban = [True, False]
     min_speed, max_speed = 10, 110
 
     st.sidebar.header('Filters')
@@ -61,15 +59,14 @@ def assert_selected(selections: dict[str, list | tuple]):
 
 def query_example(selections: dict[str, list | tuple]) -> pd.DataFrame:
     con = duckdb.connect(DUCKDB, read_only=True)
-
     q = f"""
         SELECT t.season, l.county
-        FROM accident_fact AS a
-        JOIN time_dim AS t ON a.time_id = t.id
+        FROM accident_fact a
+        JOIN time_dim t ON a.time_id = t.id
         WHERE t.year IN {selections['year']} AND t.season IN {selections['season']}
-        JOIN location_dim AS l ON a.location_id = l.id
+        JOIN location_dim l ON a.location_id = l.id
         WHERE l.county IN {selections['county']}
-        JOIN road_dim AS r ON a.road_id = r.id
+        JOIN road_dim r ON a.road_id = r.id
         WHERE r.speed_limit BETWEEN {selections['speed']}
     """
 
@@ -77,17 +74,56 @@ def query_example(selections: dict[str, list | tuple]) -> pd.DataFrame:
     return pd.DataFrame(res)
 
 
-prepare_scene()
-selections = prepare_filters()
-is_selected = assert_selected(selections)
+def query_example_spatial(selections) -> pd.DataFrame:
+    con = duckdb.connect(DUCKDB, read_only=True)
+    q = f"""
+        SELECT l.gps_x, l.gps_y, a.number_injured, a.number_fatalities
+        FROM accident_fact a
+        JOIN time_dim t ON a.time_id = t.id
+        WHERE t.year IN {selections['year']} AND t.season IN {selections['season']}
+        JOIN location_dim l ON a.location_id = l.id
+        JOIN road_dim r ON a.road_id = r.id
+        WHERE r.speed_limit BETWEEN {selections['speed']}
+    """
 
-if is_selected:
-    df = query_example(selections)
+    res = con.sql(q).fetchall()
+    return pd.DataFrame(res)
+
+
+def plot_example(df: pd.DataFrame):
+    # TODO: verify there is data
 
     g = ggplot(df) +\
         aes('season') +\
         facet_wrap('county') +\
         geom_histogram()
 
-    # TODO: use pydeck for map charts
-    pdk.Layer('scatter')
+    st.pyplot(ggplot.draw(g))
+
+
+def plot_example_spatial(df: pd.DataFrame):
+    # TODO: verify there is data
+
+    layer = pdk.Layer(
+        'ScatterPlotLayer',
+        data=df,
+        get_position=['gps_x', 'gps_y'],
+    )
+
+    view_state = pdk.ViewState(latitude=59.44, longitude=24.75, zoom=6)
+    deck = pdk.Deck(layers=layer, initial_view_state=view_state)
+
+    st.pydeck_chart(deck)
+
+
+prepare_scene()
+selections = prepare_filters()
+is_selected = assert_selected(selections)
+
+if is_selected:
+    df_example = query_example(selections)
+    plot_example(df_example)
+
+    df_example_spatial = query_example_spatial(selections)
+    plot_example_spatial(df_example_spatial)
+

@@ -1,9 +1,9 @@
-SELECT
+select
         case_id as id,
         county,
-        is_settlement AS urban,
-        commune AS municipality,
+        is_settlement as urban,
+        commune as municipality,
         village,
-        x AS gps_x,
-        y AS gps_y
-FROM accidents_tmp
+        x as gps_x,
+        y as gps_y
+from accidents_tmp

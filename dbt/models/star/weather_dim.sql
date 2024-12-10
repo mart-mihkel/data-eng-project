@@ -1,11 +1,13 @@
-SELECT
+select
+        a.case_id as id,
         w.hourly_precipitation_total as precipitation,
         w.hourly_maximum_wind_speed as wind_speed,
         w.air_temperature as temperature,
         w.relative_humidity
-FROM accidents_tmp AS a
-LEFT JOIN weather_tmp AS w 
-        ON a.nearest_station = w.station 
-        AND a.year = w.year
-        AND a.month = w.month
-        AND a.day = w.day
+from accidents_tmp a
+left join weather_tmp w
+        on a.nearest_station = w.station
+        and a.year = w.year
+        and a.month = w.month
+        and a.day = w.day
+        and a.hour = w.hour

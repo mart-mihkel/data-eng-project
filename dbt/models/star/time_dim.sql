@@ -1,8 +1,8 @@
-SELECT
+select
         case_id as id,
         season,
         year,
         month,
         day,
         weekday
-FROM accidents_tmp
+from accidents_tmp

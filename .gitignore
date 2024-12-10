@@ -9,4 +9,4 @@ logs
 
 .DS_Store
 
-duckdb/duck.db
+duckdb/*

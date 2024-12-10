@@ -33,6 +33,7 @@ COL_MAP = {
     "Region": "region",
 }
 
+DESIRED_COLUMNS = ["road_number", "start", "end", "AADT_vehicles_per_day", "survey_year"]
 
 def extract():
     target = "/tmp/traffic_density"
@@ -52,7 +53,7 @@ def load():
     for f in xlsxs:
         df = pd.read_excel(f"/tmp/traffic_density/{f}")
         df = df.rename(columns=COL_MAP)
-
+        df = df[DESIRED_COLUMNS]
         items = df.to_dict(orient="records")
         col.insert_many(items)
 

@@ -44,6 +44,13 @@ def wrangle():
 
         stem = f.split(".")[0]
         df["station"] = stem
+        if(stem=="Haademeeste"):
+           df["hour"] = df["Untitled: 3"].apply(lambda x: x.hour)
+
+        else:
+           print(df["time"].iloc[0])
+           df["hour"] = df["time"].apply(lambda x: x.hour)
+           print(df["hour"].iloc[0])
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 
 
@@ -69,7 +76,7 @@ with DAG("historical_weather_etl", catchup=False) as dag:
     )
 
     wrangle = PythonOperator(
-        task_id="preporcess_historical_weather",
+        task_id="preprocess_historical_weather",
         python_callable=wrangle,
     )
 

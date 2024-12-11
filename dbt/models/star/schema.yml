@@ -25,6 +25,26 @@ models:
       - name: county
       - name: municipality
 
+    # Masked view of location_dim with GPS coordinates excluded
+  - name: masked_location_dim
+    description: "View masking GPS coordinates (gps_x, gps_y) for privacy while retaining other location details."
+    columns:
+      - name: id
+        description: "Primary key."
+        data_tests:
+          - unique
+          - not_null
+      - name: gps_x
+        description: "Masked GPS latitude (always NULL)."
+      - name: gps_y
+        description: "Masked GPS longitude (always NULL)."
+      - name: urban
+        description: "Indicates if the location is in an urban area."
+      - name: county
+        description: "County of the location."
+      - name: municipality
+        description: "Municipality of the location."
+
   - name: weather_dim
     columns:
       - name: id
@@ -80,4 +100,3 @@ models:
       - name: number_vehicles
       - name: number_fatalities
       - name: number_injured
-

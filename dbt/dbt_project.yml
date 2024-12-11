@@ -1,7 +1,7 @@
-name: 'traffic_accidents'
-version: '1.0.0'
+name: "traffic_accidents"
+version: "1.0.0"
 
-profile: 'duckdb'
+profile: "duckdb"
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -18,3 +18,7 @@ models:
   traffic_accidents:
     star:
       +materialized: table
+    location_dim:
+      +materialized: table # Ensure raw data is stored as a table
+    masked_location_dim:
+      +materialized: view # Masked version is a view to dynamically apply masking

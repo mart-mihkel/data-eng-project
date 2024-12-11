@@ -39,22 +39,15 @@ def wrangle():
         df = pd.read_excel(f"/tmp/historical_weather/{f}", header=2)
         df = df.rename(columns=COL_MAP)
 
-
-
         stem = f.split(".")[0]
         df["station"] = stem
-        if(stem=="Haademeeste"):
-           print(df.columns)
-           print(df["Unnamed: 3"].iloc[0])
-           df["hour"] = df["Unnamed: 3"].apply(lambda x: x.hour)
 
+        if(stem == "Haademeeste"):
+            df["hour"] = df["Unnamed: 3"].apply(lambda x: x.hour)
         else:
-           print(df["hour"].iloc[0])
-           df["hour"] = df["hour"].apply(lambda x: x.hour)
-           print(df["hour"].iloc[0])
-        # Removes columns not in column map
-        if(len(df.columns) != len(COL_MAP.values())):
-            df = df.drop(columns = df.columns.difference(COL_MAP.values()))
+            df["hour"] = df["hour"].apply(lambda x: x.hour)
+
+        df = df[df.columns.intersection(COL_MAP.values())]
 
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 

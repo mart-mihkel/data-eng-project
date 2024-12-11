@@ -15,7 +15,7 @@ WEATHER_COLLECTION = "weather"
 DENSITY_COLLECTION = "density"
 ACCIDENT_COLLECTION = "accidents"
 
-#WEATHER_COLUMNS = ['_id', 'year', 'month', 'day', 'time', 'air_pressure_at_sea_level', 'air_pressure_at_station_height', 'hourly_precipitation_total', 'relative_humidity', 'air_temperature', 'hourly_min_air_temperature', 'hourly_max_air_temperature', '10_min_average_wind_direction', '10_min_average_wind_speed', 'hourly_maximum_wind_speed']
+WEATHER_COLUMNS = ['year', 'month', 'day', 'hour', 'air_pressure_at_station_height', 'hourly_precipitation_total', 'relative_humidity', 'air_temperature', 'hourly_min_air_temperature', 'hourly_max_air_temperature', '10_min_average_wind_speed', 'hourly_maximum_wind_speed', 'station']
 
 
 def serialize_accident():
@@ -39,6 +39,7 @@ def serialize_weather():
 
     batch = coll.find().limit(batch_size).to_list()
     batch_df = pd.DataFrame(batch)
+    batch_df = batch_df[WEATHER_COLUMNS]
 
     duck_client.sql("DROP TABLE IF EXISTS weather_tmp")
     duck_client.sql("CREATE TABLE weather_tmp AS SELECT * FROM batch_df")
@@ -48,6 +49,7 @@ def serialize_weather():
 
         batch = coll.find().skip(skip).limit(batch_size).to_list()
         batch_df = pd.DataFrame(batch)
+        batch_df = batch_df[WEATHER_COLUMNS]
 
         duck_client.sql("INSERT INTO weather_tmp SELECT * FROM batch_df")
 

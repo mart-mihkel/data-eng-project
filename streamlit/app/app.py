@@ -1,11 +1,12 @@
-import duckdb
 import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
 from plotnine import ggplot, aes, facet_wrap, geom_histogram
 
-DUCKDB = "../duckdb/duck.db"
+from .querier import CachedQuery
+
+QUERIER = CachedQuery()
 YEAR_QUERY = "SELECT DISTINCT year FROM time_dim ORDER BY year"
 COUNTY_QUERY = "SELECT DISTINCT county FROM location_dim ORDER BY county"
 
@@ -15,11 +16,10 @@ def prepare_scene():
 
 
 def prepare_filters() -> dict[str, list | tuple]:
-    con = duckdb.connect(DUCKDB, read_only=True)
-
-    years = con.sql(YEAR_QUERY).fetchall()
+    # TODO: query_cached returns df
+    years = QUERIER.query_cached(sql=YEAR_QUERY, cache_key='year')
     seasons = ['Winter', 'Fall', 'Summer', 'Spring']
-    counties = con.sql(COUNTY_QUERY).fetchall()
+    counties = QUERIER.query_cached(sql=COUNTY_QUERY, cache_key='county')
     min_speed, max_speed = 10, 110
 
     st.sidebar.header('Filters')
@@ -58,7 +58,6 @@ def assert_selected(selections: dict[str, list | tuple]):
 
 
 def query_example(selections: dict[str, list | tuple]) -> pd.DataFrame:
-    con = duckdb.connect(DUCKDB, read_only=True)
     q = f"""
         SELECT t.season, l.county
         FROM accident_fact a
@@ -70,12 +69,10 @@ def query_example(selections: dict[str, list | tuple]) -> pd.DataFrame:
         WHERE r.speed_limit BETWEEN {selections['speed']}
     """
 
-    res = con.sql(q).fetchall()
-    return pd.DataFrame(res)
+    return QUERIER.query_cached(sql=q, cache_key='example')
 
 
 def query_example_spatial(selections) -> pd.DataFrame:
-    con = duckdb.connect(DUCKDB, read_only=True)
     q = f"""
         SELECT l.gps_x, l.gps_y, a.number_injured, a.number_fatalities
         FROM accident_fact a
@@ -86,8 +83,7 @@ def query_example_spatial(selections) -> pd.DataFrame:
         WHERE r.speed_limit BETWEEN {selections['speed']}
     """
 
-    res = con.sql(q).fetchall()
-    return pd.DataFrame(res)
+    return QUERIER.query_cached(sql=q, cache_key='example_spatial')
 
 
 def plot_example(df: pd.DataFrame):

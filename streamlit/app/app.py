@@ -5,7 +5,7 @@ import streamlit as st
 
 from plotnine import ggplot, aes, facet_wrap, geom_histogram
 
-DUCKDB = "duckdb/duck.db"
+DUCKDB = "../duckdb/duck.db"
 YEAR_QUERY = "SELECT DISTINCT year FROM time_dim ORDER BY year"
 COUNTY_QUERY = "SELECT DISTINCT county FROM location_dim ORDER BY county"
 
@@ -47,7 +47,7 @@ def assert_selected(selections: dict[str, list | tuple]):
         return False
 
     if not selections['season']:
-        st.write('No seasons selected'):
+        st.write('No seasons selected')
         return False
 
     if not selections['county']:

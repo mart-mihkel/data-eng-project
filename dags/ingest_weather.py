@@ -15,7 +15,7 @@ COL_MAP = {
     "Aasta": "year",
     "Kuu": "month",
     "Päev": "day",
-    "Kell (UTC)": "time",
+    "Kell (UTC)": "hour",
     "Õhutemperatuur °C": "air_temperature",
     "Tunni miinimum õhutemperatuur °C": "hourly_min_air_temperature",
     "Tunni maksimum õhutemperatuur °C": "hourly_max_air_temperature",
@@ -23,7 +23,8 @@ COL_MAP = {
     "Tunni maksimum tuule kiirus m/s": "hourly_maximum_wind_speed",
     "Tunni sademete summa mm": "hourly_precipitation_total",
     "Õhurõhk jaama kõrgusel hPa": "air_pressure_at_station_height",
-    "Suhteline õhuniiskus %": "relative_humidity"
+    "Suhteline õhuniiskus %": "relative_humidity",
+    "Station": "station"
 }
 
 
@@ -38,19 +39,23 @@ def wrangle():
         df = pd.read_excel(f"/tmp/historical_weather/{f}", header=2)
         df = df.rename(columns=COL_MAP)
 
-        # Removes columns not in column map
-        if(len(df.columns) != len(COL_MAP.values())):
-            df = df.drop(columns = df.columns.difference(COL_MAP.values()))
+
 
         stem = f.split(".")[0]
         df["station"] = stem
         if(stem=="Haademeeste"):
-           df["hour"] = df["Untitled: 3"].apply(lambda x: x.hour)
+           print(df.columns)
+           print(df["Unnamed: 3"].iloc[0])
+           df["hour"] = df["Unnamed: 3"].apply(lambda x: x.hour)
 
         else:
-           print(df["time"].iloc[0])
-           df["hour"] = df["time"].apply(lambda x: x.hour)
            print(df["hour"].iloc[0])
+           df["hour"] = df["hour"].apply(lambda x: x.hour)
+           print(df["hour"].iloc[0])
+        # Removes columns not in column map
+        if(len(df.columns) != len(COL_MAP.values())):
+            df = df.drop(columns = df.columns.difference(COL_MAP.values()))
+
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 
 

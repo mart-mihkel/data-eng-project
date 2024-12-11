@@ -3,4 +3,4 @@ duckdb:
   outputs:
     dev:
       type: duckdb
-      path: "/duckdb/duck.db"
+      path: "../duckdb/duck.db"

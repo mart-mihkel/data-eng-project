@@ -4,7 +4,7 @@ import streamlit as st
 
 from plotnine import ggplot, aes, facet_wrap, geom_histogram
 
-from .querier import CachedQuery
+from querier import CachedQuery
 
 QUERIER = CachedQuery()
 YEAR_QUERY = "SELECT DISTINCT year FROM time_dim ORDER BY year"

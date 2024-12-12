@@ -2,6 +2,7 @@ select
         a.case_id as id,
         a.road_hill_type as road_geometry,
         a.road_condition as road_state_of_repair,
+        a.road_paving as paving_type,
         a.speed_limit,
         a.road_number as highway_number,
         a.road_kilometer as highway_km,

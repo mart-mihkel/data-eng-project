@@ -11,6 +11,7 @@ models:
       - name: year
       - name: month
       - name: day
+      - name: hour
       - name: weekday
 
   - name: location_dim
@@ -64,6 +65,7 @@ models:
           - not_null
       - name: road_geometry
       - name: road_state_of_repair
+      - name: paving_type
       - name: speed_limit
       - name: highway_number
       - name: highway_km

@@ -4,5 +4,6 @@ select
         year,
         month,
         day,
+        hour,
         weekday
 from accidents_tmp

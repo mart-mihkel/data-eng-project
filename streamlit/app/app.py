@@ -136,7 +136,6 @@ def plot_example(df: pd.DataFrame):
        st.write("Insufficient data to draw plot!")
        return
     df.rename(columns={0:"density", 1:"injuries", 2:"urban"}, inplace=True)
-    print(df)
     g = ggplot(df) +\
         aes(x="density", y="injuries",fill="urban") +\
         geom_col(position="dodge") +\
@@ -153,7 +152,6 @@ def plot_example_spatial(df: pd.DataFrame):
        return
 
     df.rename(columns={0:"weather", 1:"injured",2:"deaths", 3:"severity"}, inplace=True)
-    #print(df)
     g = ggplot(df) +\
         aes(x="weather", y="deaths") +\
         geom_bar(stat="identity", fill="#4BACC6") +\

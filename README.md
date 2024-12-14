@@ -2,14 +2,14 @@
 
 ## **Project Overview**
 
-This project analyzes traffic accidents in Estonia by examining the impact of weather conditions, traffic volumes, and road characteristics. The goal is to provide actionable insights for improving road safety and reducing accidents.
+This project analyzes traffic accidents in Estonia by examining the impact of weather conditions, traffic volumes, and road characteristics. The goal is to provide actionable insights for improving road safety and reducing accidents. This is achieved through combining data from varied sources, such as the Estonian Open Data Portal, Estonian Transport Administration and the Estonian Weather Service. By using data engineering techniques and tools, this data is cleaned, combined, transformed, loaded and served.
 
 ### **Key Objectives**
 
-1. Understand how weather conditions like rain, snow, and fog influence accident severity.
-2. Identify traffic patterns during peak hours that contribute to accidents.
-3. Assess the impact of adverse weather on vulnerable groups (pedestrians, cyclists).
-4. Provide data-driven recommendations to policymakers for enhancing road safety.
+1. Find reliable and detailed data about the needed domains.
+2. Enable the detailed analysis of of how weather conditions like precipitation or wind speed influence accident severity.
+3. Enable investigating the effects of traffic density of accident severity.
+4. Create customizable data-driven visualizations that can be used for communicating key findings.
 
 ---
 
@@ -19,14 +19,15 @@ The project uses the following tools and technologies to build a complete data p
 
 | **Technology**      | **Purpose**                                                                    |
 | ------------------- | ------------------------------------------------------------------------------ |
-| **Apache Airflow**  | Automate and schedule ETL workflows to extract and process data from MongoDB.  |
-| **DuckDB**          | Store and query structured datasets efficiently for analytical purposes.       |
-| **dbt**             | Perform data transformations, build a star schema, and handle data governance. |
-| **MongoDB**         | Store raw accident and weather data in an unstructured format.                 |
+| **Apache Airflow**  | Automate and schedule ETL workflows to extract, clean and transfer data.       |
+| **DuckDB**          | Store and query structured datasets and views efficiently for analytical purposes. |
+| **dbt**             | Perform data transformations, build a star schema, and enable data masking.  |
+| **MongoDB**         | Store raw accident, traffic density and weather data in an unstructured format.                 |
 | **Streamlit**       | Create an interactive dashboard for visualizing traffic accident insights.     |
-| **Data Privacy**    | Ensure sensitive data (e.g., GPS coordinates) is masked while querying.        |
-| **Data Governance** | Used OpenMetadata for data lineage and governance.                             |
-| **Redis**           | A high-performance in-memory database used for caching and quick lookups.      |
+| **Data Privacy**    | Ensure sensitive data (e.g., GPS coordinates, address) is masked while querying.        |
+| **Data Security**   | Ensure that data is securely handled, apprpriate access control measures have been implemented. | 
+| **OpenMetadata**    | Used for data lineage and governance.                             |
+| **Redis**           | A high-performance in-memory database used for caching common SQL queries and quick lookups.      |
 
 ---
 

@@ -37,26 +37,28 @@ We used the following datasets to perform the analysis:
 
 1. **Traffic Accidents Dataset**:
    - Contains details about accidents, such as date, location, severity, and participants.
+   - COnsisted of traffic accident with at least one injured person from 2011 to 2024.
    - Source: Estonian Open Data Portal.
-   - Link to the dataset - https://avaandmed.eesti.ee/datasets/inimkannatanutega-liiklusonnetuste-andmed
    - Link to the dataset: [Traffic Accidents Dataset](https://avaandmed.eesti.ee/datasets/inimkannatanutega-liiklusonnetuste-andmed)
 2. **Weather Data**:
-   - Includes hourly weather conditions (precipitation, temperature, wind speed).
-   - Source: Open-Meteo API.
+   - Includes hourly weather conditions (precipitation, temperature, wind speed, etc).
+   - Actually consisted of 27 datasets, for 27 different weather stations in Estonia, with data from 2004 to 2024.
+   - Source: Estonian Weather Service.
    - Link to the dataset: [Weather Data](https://www.ilmateenistus.ee/kliima/ajaloolised-ilmaandmed/)
 3. **Traffic Volume Data**:
-   - Provides vehicle counts on Estonian highways and roads.
-   - Source: Transpordiamet.
+   - Provides daily vehicle counts on Estonian highways and roads.
+   - Data from 2017 to 2023, earlier years were only available in non-machinereadable .pdf files.
+   - Source: Estonian Transport Administration.
    - Link to the dataset: [Traffic Volume Data](https://www.transpordiamet.ee/liiklussageduse-statistika)
 
 ---
 
-## **Star Schema**
+## **Data modelling with star schema**
 
 To organize the data for efficient analysis, we created a **star schema** with the following components see [schema.yml](./dbt/models/star/schema.yml):
 
 1. **Fact Table**:
-   - `accident_fact`: Captures accident-related metrics (e.g., number of injuries, fatalities).
+   - `accident_fact`: Captures accident-related metrics (e.g., number of injuries, fatalities) and contains keys to all the dimension tables.
 2. **Dimension Tables**:
    - `time_dim`: Temporal data (year, month, day, weekday).
    - `location_dim`: Spatial data (county, urban/rural, municipality).
@@ -75,54 +77,43 @@ The project consists of the following steps:
 - Accident and weather data are extracted from their respective sources and loaded into a data lake.
 
 ### 2. **Data Transformation**
-
-- **dbt** performs the following transformations:
-  - Cleans and enriches raw data.
-  - Builds dimension and fact tables in DuckDB.
+- In python code, useful features are extracted from the raw data, such as extracting day and hour from a timestamp.
+- Accidents are geographically matched to their closest weather station.
+- The cleaned and augmented data is loaded to a staging area in DuckDB.
+- **dbt** performs the following transformations on DuckDB data:
+  - Selects the relevant columns from staging area tables.
+  - Builds dimension and fact tables and saves them as tables in DuckDB.
   - Implements data masking for sensitive columns like GPS coordinates and addresses.
 
-### 3. **Analysis**
-
-- Queries are written in **DuckDB** to analyze:
-  - Weather conditions contributing to severe accidents.
-  - Accident patterns during peak traffic hours.
-  - Risks to vulnerable groups during adverse weather.
-
-### 4. **Visualization**
+### 3. **Visualization**
 
 - Results are visualized using **Streamlit** dashboards:
-  - Accident frequencies by region and weather conditions.
-  - Vulnerable group impact under specific weather conditions.
+  - Accident severity by weather conditions.
+  - Accident severity by traffic density.
+  - Filters for many features, such as year, season, county, etc.
 
 ---
 
 ## Start Docker Containers
 
 ```bash
+
 docker-compose up -d
-docker exec traffic-accidents-elt-airflow-worker-1 /mnt/scripts/create_airflow_users.bash # access control
+docker exec data-eng-project-airflow-worker-1 /mnt/scripts/create_airflow_users.bash
 ```
 
-### Airflow
+## Openmetadata
+
+Get jwt token from [http://localhost:8585](http://localhost:8585) 
+Settings -> Bots -> IngestionBot
+Put it in `BOT_JWT` at [ingest_mongodb_metadata.py](./dags/ingest_mongodb_metadata.py)
+
+### Start Airflow
 
 1. **Open Airflow Dashboard**: [http://localhost:8080](http://localhost:8080)
 2. **Log in using:**
    - **Username**: `admin`
    - **Password**: `admin`
 3. **Trigger the ingestions DAGs**
-   - `ingest_traffic_density`
-   - `ingest_accidents`
-   - `ingest_weather`
-4. **Trigger tranformation DAG**
-   - `transform`
-
-### Streamlit
-
-[http://localhost:8501](http://localhost:8501)
-
-### Openmetadata
-
-Get jwt token from [http://localhost:8585](http://localhost:8585) --> Settings --> Bots --> IngestionBot
-Put it in `BOT_JWT` at [ingest_mongodb_metadata.py](./dags/ingest_mongodb_metadata.py)
-Run `ingest_mongodb_metadata`
-
+4. **Trigger the transformation DAGs**
+5. **Open [http://localhost:8501] to use Streamlit.**

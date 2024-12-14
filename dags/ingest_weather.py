@@ -1,4 +1,5 @@
 import os
+import datetime
 import pandas as pd
 
 from pymongo import MongoClient
@@ -67,13 +68,18 @@ def load():
         col.insert_many(items)
 
 
-with DAG("historical_weather_etl", catchup=False) as dag:
+with DAG(
+    "historical_weather_etl", 
+    start_date=datetime.datetime(2024, 1, 1),
+    schedule="@yearly",
+    catchup=False,
+) as dag:
     extract = BashOperator(
         task_id="extract_historical_weather",
         bash_command="scripts/download_weather.bash",
     )
 
-    wrangle = PythonOperator(
+    wrangle_task = PythonOperator(
         task_id="preprocess_historical_weather",
         python_callable=wrangle,
     )
@@ -88,5 +94,5 @@ with DAG("historical_weather_etl", catchup=False) as dag:
         bash_command="rm -rf /tmp/historical_weather",
     )
 
-    _ = extract >> wrangle >> load_lake >> cleanup
+    _ = extract >> wrangle_task >> load_lake >> cleanup
 

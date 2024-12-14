@@ -1,4 +1,5 @@
 import requests
+import datetime
 import scipy as sp
 import numpy as np
 import pandas as pd
@@ -200,7 +201,12 @@ def load():
     col.insert_many(data)
 
 
-with DAG("traffic_accidents_etl", catchup=False) as dag:
+with DAG(
+    "traffic_accidents_etl", 
+    start_date=datetime.datetime(2024, 12, 1),
+    schedule="@monthly",
+    catchup=False,
+) as dag:
     extract_task = PythonOperator(
         task_id="extract_traffic_accidents",
         python_callable=extract,

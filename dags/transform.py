@@ -1,4 +1,5 @@
 import duckdb
+import datetime
 import pandas as pd
 
 from pymongo import MongoClient
@@ -6,6 +7,7 @@ from pymongo import MongoClient
 from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
+from airflow.sensors.external_task import ExternalTaskSensor
 
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 PROJECT_DB = "dataeng_project"
@@ -74,15 +76,41 @@ def cleanup():
     # duck_client.sql("DROP TABLE density_tmp")
 
 
-with DAG("transformation_dbt", catchup=False) as dag:
+with DAG(
+    "transformation_dbt",
+    start_date=datetime.datetime(2024, 12, 1),
+    schedule="@monthly",
+    catchup=False,
+) as dag:
+    wait_accidents = ExternalTaskSensor(
+        task_id='wait_accident_igested',
+        external_dag_id='traffic_accidents_etl',
+        check_existence=True,
+        mode='reschedule',
+    )
+
     prepare_accidents = PythonOperator(
         task_id="extract_accident_data_from_lake",
         python_callable=serialize_accident,
     )
 
+    wait_weather = ExternalTaskSensor(
+        task_id='wait_weather_igested',
+        external_dag_id='historical_weather_etl',
+        check_existence=True,
+        mode='reschedule',
+    )
+
     prepare_weather = PythonOperator(
         task_id="extract_weather_data_from_lake",
         python_callable=serialize_weather,
+    )
+
+    wait_density = ExternalTaskSensor(
+        task_id='wait_density_igested',
+        external_dag_id='traffic_density_etl',
+        check_existence=True,
+        mode='reschedule',
     )
 
     prepare_density = PythonOperator(
@@ -100,4 +128,7 @@ with DAG("transformation_dbt", catchup=False) as dag:
         python_callable=cleanup,
     )
 
+    # _ = wait_accidents >> prepare_accidents
+    # _ = wait_density >> prepare_density
+    # _ = wait_weather >> prepare_weather
     _ = prepare_accidents >> prepare_density >> prepare_weather >> dbt >> cleanup_task

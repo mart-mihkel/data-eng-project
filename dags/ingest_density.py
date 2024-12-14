@@ -1,5 +1,6 @@
 import os
 import zipfile
+import datetime
 import pandas as pd
 
 from pymongo import MongoClient
@@ -58,7 +59,12 @@ def load():
         col.insert_many(items)
 
 
-with DAG("traffic_density_etl", catchup=False) as dag:
+with DAG(
+    "traffic_density_etl",
+    start_date=datetime.datetime(2024, 1, 1),
+    schedule="@yearly",
+    catchup=False,
+) as dag:
     extract_task = PythonOperator(
         task_id="extract_traffic_density",
         python_callable=extract,

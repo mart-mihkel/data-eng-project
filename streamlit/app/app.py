@@ -10,7 +10,7 @@ from querier import CachedQuery
 
 QUERIER = CachedQuery()
 YEAR_QUERY = "SELECT DISTINCT year FROM time_dim ORDER BY year"
-COUNTY_QUERY = "SELECT DISTINCT county FROM location_dim WHERE county NOT NULL ORDER BY county"
+COUNTY_QUERY = "SELECT DISTINCT county FROM masked_location_dim WHERE county NOT NULL ORDER BY county"
 
 
 def prepare_scene():
@@ -90,7 +90,7 @@ def query_example(selections: dict[str, list | tuple]) -> pd.DataFrame:
        FROM accident_fact a
        JOIN road_dim r ON a.road_id = r.id
        JOIN time_dim t ON a.time_id = t.id
-       JOIN location_dim l ON a.location_id = l.id
+       JOIN masked_location_dim l ON a.location_id = l.id
        WHERE t.year IN {selections['year']} AND t.season IN {selections['season']}
            AND r.highway_cars_per_day NOT NULL AND l.county IN {selections['county']}
            AND l.urban IN {selections['urban']} AND r.speed_limit BETWEEN {selections['speed'][0]} AND {selections['speed'][1]}
@@ -118,7 +118,7 @@ def query_example_spatial(selections) -> pd.DataFrame:
         ROUND(SUM(a.num_dead + a.num_injured) * 1.0 / COUNT(a.id), 2) AS avg_severity
       FROM accident_fact a
       JOIN weather_dim w ON a.weather_id = w.id
-      JOIN location_dim l ON a.location_id = l.id
+      JOIN masked_location_dim l ON a.location_id = l.id
       JOIN time_dim t ON a.time_id = t.id
       JOIN road_dim r ON a.road_id = r.id
       WHERE w.precipitation NOT NULL and w.wind_speed NOT NULL

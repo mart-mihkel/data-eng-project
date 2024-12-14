@@ -71,7 +71,7 @@ The project consists of the following steps:
 
 ### 1. **Data Extraction**
 
-- Accident and weather data are extracted from loaded into **MongoDB** using.
+- Accident and weather data are extracted from their respective sources and  loaded into **MongoDB**.
 
 ### 2. **Data Transformation**
 

@@ -69,7 +69,7 @@ x-airflow-common: &airflow-common
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     # If you want to use it, outcomment it and replace airflow.cfg with the name of your config file
-    # AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
     AIRFLOW_USER_PASSWORD: ${AIRFLOW_USER_PASSWORD}
     AIRFLOW_VIEWER_PASSWORD: ${AIRFLOW_VIEWER_PASSWORD}
@@ -325,8 +325,8 @@ services:
     volumes:
       - postgresql-db-volume:/var/lib/postgresql/data
 
-    networks:
-      - app_net
+    # networks:
+    #   - app_net
     healthcheck:
       test: psql -U postgres -tAc 'select 1' -d openmetadata_db
       interval: 15s
@@ -340,8 +340,8 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
       - xpack.security.enabled=false
-    networks:
-      - app_net
+    # networks:
+    #   - app_net
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -493,8 +493,8 @@ services:
       PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER: ${PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER:-"noop"}
       #airflow parameters
       AIRFLOW_HOME: /opt/airflow
-      AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-airflow}
-      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-airflow}
+      AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-admin}
+      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
       AIRFLOW_TIMEOUT: ${AIRFLOW_TIMEOUT:-10}
       AIRFLOW_TRUST_STORE_PATH: ${AIRFLOW_TRUST_STORE_PATH:-""}
       AIRFLOW_TRUST_STORE_PASSWORD: ${AIRFLOW_TRUST_STORE_PASSWORD:-""}
@@ -564,8 +564,8 @@ services:
         condition: service_healthy
       postgresql:
         condition: service_healthy
-    networks:
-      - app_net
+    # networks:
+    #   - app_net
 
   openmetadata-server:
     container_name: openmetadata_server
@@ -703,9 +703,8 @@ services:
       PIPELINE_SERVICE_CLIENT_HOST_IP: ${PIPELINE_SERVICE_CLIENT_HOST_IP:-""}
       PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER: ${PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER:-"noop"}
       #airflow parameters
-      AIRFLOW_HOME: /opt/airflow
-      AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-airflow}
-      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-airflow}
+      AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-admin}
+      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
       AIRFLOW_TIMEOUT: ${AIRFLOW_TIMEOUT:-10}
       AIRFLOW_TRUST_STORE_PATH: ${AIRFLOW_TRUST_STORE_PATH:-""}
       AIRFLOW_TRUST_STORE_PASSWORD: ${AIRFLOW_TRUST_STORE_PASSWORD:-""}
@@ -772,8 +771,8 @@ services:
         condition: service_healthy
       execute-migrate-all:
         condition: service_completed_successfully
-    networks:
-      - app_net
+    # networks:
+    #   - app_net
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8586/healthcheck"]
 
@@ -791,12 +790,12 @@ services:
       AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
-      DB_HOST: ${AIRFLOW_DB_HOST:-postgres}
+      DB_HOST: ${AIRFLOW_DB_HOST:-postgresql}
       DB_PORT: ${AIRFLOW_DB_PORT:-5432}
-      AIRFLOW_DB: ${AIRFLOW_DB:-airflow}
-      DB_USER: ${AIRFLOW_DB_USER:-airflow}
+      AIRFLOW_DB: ${AIRFLOW_DB:-airflow_db}
+      DB_USER: ${AIRFLOW_DB_USER:-airflow_user}
       DB_SCHEME: ${AIRFLOW_DB_SCHEME:-postgresql+psycopg2}
-      DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow}
+      DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow_pass}
       # extra connection-string properties for the database
       # EXAMPLE 
       # require SSL (only for Postgres)
@@ -814,19 +813,19 @@ services:
       - 8080
     ports:
       - "8090:8080"
-    networks:
-      - app_net
+    # networks:
+    #   - app_net
     volumes:
       - ingestion-volume-dag-airflow:/opt/airflow/dag_generated_configs
       - ingestion-volume-dags:/opt/airflow/dags
       - ingestion-volume-tmp:/tmp
 
-networks:
-  app_net:
-    ipam:
-      driver: default
-      config:
-        - subnet: "172.16.240.0/24"
+# networks:
+#   app_net:
+#     ipam:
+#       driver: default
+#       config:
+#         - subnet: "172.16.240.0/24"
 
 volumes:
   postgresql-db-volume:

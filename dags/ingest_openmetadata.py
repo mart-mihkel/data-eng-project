@@ -9,7 +9,77 @@ from metadata.workflow.metadata import MetadataWorkflow
 
 
 config = """
-
+source:
+  type: mongodb
+  serviceName: mongo
+  serviceConnection:
+    config:
+      type: MongoDB
+      username: admin
+      password: admin
+      hostPort: mongo:27017
+      # connectionOptions:
+      #   key: value
+      databaseName: dataeng_project
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      markDeletedTables: true
+      markDeletedStoredProcedures: true
+      includeTables: true
+      includeViews: true
+      # includeTags: true
+      # includeOwners: false
+      # includeStoredProcedures: true
+      # includeDDL: true
+      # queryLogDuration: 1
+      # queryParsingTimeoutLimit: 300
+      # useFqnForFiltering: false
+      # threads: 4
+      # incremental:
+      #   enabled: true
+      #   lookbackDays: 7
+      #   safetyMarginDays: 1
+      # databaseFilterPattern:
+      #   includes:
+      #     - database1
+      #     - database2
+      #   excludes:
+      #     - database3
+      #     - database4
+      # schemaFilterPattern:
+      #   includes:
+      #     - schema1
+      #     - schema2
+      #   excludes:
+      #     - schema3
+      #     - schema4
+      # tableFilterPattern:
+      #   includes:
+      #     - users
+      #     - type_test
+      #   excludes:
+      #     - table3
+      #     - table4
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  loggerLevel: INFO  # DEBUG, INFO, WARNING or ERROR
+  openMetadataServerConfig:
+    hostPort: "http://openmetadata-server:8585/api"
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: "{bot_jwt_token}"
+    ## Store the service Connection information
+    storeServiceConnection: true  # false
+    ## Secrets Manager Configuration
+    # secretsManagerProvider: aws, azure or noop
+    # secretsManagerLoader: airflow or env
+    ## If SSL, fill the following
+    # verifySSL: validate  # or ignore
+    # sslConfig:
+    #   caCertificate: /local/path/to/certificate
 """
 
 def metadata_ingestion_workflow():

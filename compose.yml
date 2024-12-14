@@ -267,9 +267,9 @@ services:
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: "true"
-      _AIRFLOW_WWW_USER_CREATE: "true"
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
+      # _AIRFLOW_WWW_USER_CREATE: "true"
+      # _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
+      # _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
       _PIP_ADDITIONAL_REQUIREMENTS: ""
     user: "0:0"
     volumes:
@@ -458,8 +458,8 @@ services:
       DB_DRIVER_CLASS: ${DB_DRIVER_CLASS:-org.postgresql.Driver}
       DB_SCHEME: ${DB_SCHEME:-postgresql}
       DB_PARAMS: ${DB_PARAMS:-allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC}
-      DB_USER: ${DB_USER:-openmetadata_user}
-      DB_USER_PASSWORD: ${DB_USER_PASSWORD:-openmetadata_password}
+      DB_USER: ${OMD_DB_USER}
+      DB_USER_PASSWORD: ${OMD_DB_PASSWORD}
       DB_HOST: ${DB_HOST:-postgresql}
       DB_PORT: ${DB_PORT:-5432}
       OM_DATABASE: ${OM_DATABASE:-openmetadata_db}
@@ -494,7 +494,7 @@ services:
       #airflow parameters
       AIRFLOW_HOME: /opt/airflow
       AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-admin}
-      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
+      AIRFLOW_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
       AIRFLOW_TIMEOUT: ${AIRFLOW_TIMEOUT:-10}
       AIRFLOW_TRUST_STORE_PATH: ${AIRFLOW_TRUST_STORE_PATH:-""}
       AIRFLOW_TRUST_STORE_PASSWORD: ${AIRFLOW_TRUST_STORE_PASSWORD:-""}
@@ -669,8 +669,8 @@ services:
       DB_DRIVER_CLASS: ${DB_DRIVER_CLASS:-org.postgresql.Driver}
       DB_SCHEME: ${DB_SCHEME:-postgresql}
       DB_PARAMS: ${DB_PARAMS:-allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC}
-      DB_USER: ${DB_USER:-openmetadata_user}
-      DB_USER_PASSWORD: ${DB_USER_PASSWORD:-openmetadata_password}
+      DB_USER: ${OMD_DB_USER}
+      DB_USER_PASSWORD: ${OMD_DB_PASSWORD}
       DB_HOST: ${DB_HOST:-postgresql}
       DB_PORT: ${DB_PORT:-5432}
       OM_DATABASE: ${OM_DATABASE:-openmetadata_db}
@@ -704,7 +704,7 @@ services:
       PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER: ${PIPELINE_SERVICE_CLIENT_SECRETS_MANAGER_LOADER:-"noop"}
       #airflow parameters
       AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-admin}
-      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
+      AIRFLOW_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
       AIRFLOW_TIMEOUT: ${AIRFLOW_TIMEOUT:-10}
       AIRFLOW_TRUST_STORE_PATH: ${AIRFLOW_TRUST_STORE_PATH:-""}
       AIRFLOW_TRUST_STORE_PASSWORD: ${AIRFLOW_TRUST_STORE_PASSWORD:-""}

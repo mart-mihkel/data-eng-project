@@ -100,19 +100,29 @@ The project consists of the following steps:
 
 ```bash
 docker-compose up -d
-docker exec data-eng-project-airflow-worker-1 /mnt/scripts/create_airflow_users.bash
+docker exec traffic-accidents-elt-airflow-worker-1 /mnt/scripts/create_airflow_users.bash # access control
 ```
 
-## Openmetadata
-
-Get jwt token from [http://localhost:8585](http://localhost:8585) 
-Settings -> Bots -> IngestionBot
-Put it in `BOT_JWT` at [ingest_mongodb_metadata.py](./dags/ingest_mongodb_metadata.py)
-
-### Start Airflow
+### Airflow
 
 1. **Open Airflow Dashboard**: [http://localhost:8080](http://localhost:8080)
 2. **Log in using:**
    - **Username**: `admin`
    - **Password**: `admin`
 3. **Trigger the ingestions DAGs**
+   - `ingest_traffic_density`
+   - `ingest_accidents`
+   - `ingest_weather`
+4. **Trigger tranformation DAG**
+   - `transform`
+
+### Streamlit
+
+[http://localhost:8501](http://localhost:8501)
+
+### Openmetadata
+
+Get jwt token from [http://localhost:8585](http://localhost:8585) --> Settings --> Bots --> IngestionBot
+Put it in `BOT_JWT` at [ingest_mongodb_metadata.py](./dags/ingest_mongodb_metadata.py)
+Run `ingest_mongodb_metadata`
+

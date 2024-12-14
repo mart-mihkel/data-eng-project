@@ -18,7 +18,3 @@ models:
   traffic_accidents:
     star:
       +materialized: table
-    location_dim:
-      +materialized: table # Ensure raw data is stored as a table
-    masked_location_dim:
-      +materialized: view # Masked version is a view to dynamically apply masking

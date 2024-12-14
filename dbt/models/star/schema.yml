@@ -93,7 +93,6 @@ models:
       - name: weather_id
       - name: parties_id
       - name: road_id
-      - name: happened_at
       - name: number_people
       - name: number_vehicles
       - name: number_fatalities

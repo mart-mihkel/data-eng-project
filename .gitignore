@@ -2,7 +2,8 @@
 __pycache__
 .venv
 
-.env
+# NOTE: see in .env
+# .env
 
 # airflow
 logs

@@ -1,3 +1,4 @@
+import os
 import duckdb
 import datetime
 import pandas as pd
@@ -67,6 +68,21 @@ def serialize_density():
     duck_client.sql("CREATE TABLE density_tmp AS SELECT * FROM df")
 
 
+def clone_and_mask():
+    """
+    Create a copy of the primary duckdb file with no sensitive 
+    location data. This option can be served to people who
+    don't need to know the location data.
+    """
+    masked = 'duckdb/masked.db'
+    os.system(f'cp {DUCK_DB} {masked}')
+
+    duck_client = duckdb.connect(masked)
+    duck_client.sql("DROP TABLE location_dim")
+    duck_client.sql("CREATE TABLE location_dim AS SELECT * FROM masked_location_dim")
+    duck_client.sql("DROP TABLE masked_location_dim")
+
+
 def cleanup():
     duck_client = duckdb.connect(DUCK_DB)
 
@@ -81,36 +97,36 @@ with DAG(
     schedule="@monthly",
     catchup=False,
 ) as dag:
-    wait_accidents = ExternalTaskSensor(
-        task_id='wait_accident_igested',
-        external_dag_id='traffic_accidents_etl',
-        check_existence=True,
-        mode='reschedule',
-    )
+    # wait_accidents = ExternalTaskSensor(
+    #     task_id='wait_accident_igested',
+    #     external_dag_id='traffic_accidents_etl',
+    #     check_existence=True,
+    #     mode='reschedule',
+    # )
 
     prepare_accidents = PythonOperator(
         task_id="extract_accident_data_from_lake",
         python_callable=serialize_accident,
     )
 
-    wait_weather = ExternalTaskSensor(
-        task_id='wait_weather_igested',
-        external_dag_id='historical_weather_etl',
-        check_existence=True,
-        mode='reschedule',
-    )
+    # wait_weather = ExternalTaskSensor(
+    #     task_id='wait_weather_igested',
+    #     external_dag_id='historical_weather_etl',
+    #     check_existence=True,
+    #     mode='reschedule',
+    # )
 
     prepare_weather = PythonOperator(
         task_id="extract_weather_data_from_lake",
         python_callable=serialize_weather,
     )
 
-    wait_density = ExternalTaskSensor(
-        task_id='wait_density_igested',
-        external_dag_id='traffic_density_etl',
-        check_existence=True,
-        mode='reschedule',
-    )
+    # wait_density = ExternalTaskSensor(
+    #     task_id='wait_density_igested',
+    #     external_dag_id='traffic_density_etl',
+    #     check_existence=True,
+    #     mode='reschedule',
+    # )
 
     prepare_density = PythonOperator(
         task_id="extract_density_data_from_lake",
@@ -127,7 +143,12 @@ with DAG(
         python_callable=cleanup,
     )
 
+    create_masked_duckdb = PythonOperator(
+        task_id="masked_duckdb",
+        python_callable=clone_and_mask,
+    )
+
     # _ = wait_accidents >> prepare_accidents
     # _ = wait_density >> prepare_density
     # _ = wait_weather >> prepare_weather
-    _ = prepare_accidents >> prepare_density >> prepare_weather >> dbt >> cleanup_task
+    _ = prepare_accidents >> prepare_density >> prepare_weather >> dbt >> cleanup_task >> create_masked_duckdb

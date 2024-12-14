@@ -71,15 +71,14 @@ The project consists of the following steps:
 
 ### 1. **Data Extraction**
 
-- Accident and weather data are extracted from **MongoDB** using **Apache Airflow** workflows.
-- Data from traffic volume files is preprocessed and stored locally.
+- Accident and weather data are extracted from loaded into **MongoDB** using.
 
 ### 2. **Data Transformation**
 
 - **dbt** performs the following transformations:
   - Cleans and enriches raw data.
   - Builds dimension and fact tables in DuckDB.
-  - Implements data masking for sensitive columns like GPS coordinates.
+  - Implements data masking for sensitive columns like GPS coordinates and addresses.
 
 ### 3. **Analysis**
 
@@ -90,51 +89,23 @@ The project consists of the following steps:
 
 ### 4. **Visualization**
 
-- Results are visualized using **Streamlit** dashboards and **Seaborn** plots for insights such as:
+- Results are visualized using **Streamlit** dashboards:
   - Accident frequencies by region and weather conditions.
   - Vulnerable group impact under specific weather conditions.
 
 ---
 
-## **How to Run the Project**
-
-### **1. Clone the Repository**
-
-```bash
-git clone https://github.com/your-repo/traffic-accidents-analysis.git
-cd traffic-accidents-analysis
-```
-
-### **2. Set Up the Environment**
-
-Ensure you have the following installed:
-
-- **Docker**: For running Airflow and MongoDB.
-- **Python (>=3.8)**: For dbt and visualization scripts.
-
-Install Python dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-### **3. Start Services**
-
 ## Start Docker Containers
 
 ```bash
 docker-compose up -d
+docker exec data-eng-project-airflow-worker-1 /mnt/scripts/create_airflow_users.bash
 ```
 
-This will start:
-
-- **Airflow**
-- **MongoDB**
-
-### Set Up Airflow
+### Start Airflow
 
 1. **Open Airflow Dashboard**: [http://localhost:8080](http://localhost:8080)
 2. **Log in using:**
    - **Username**: `admin`
    - **Password**: `admin`
-3. **Trigger the `etl_pipeline` DAG** to start the data pipeline.
+3. **Trigger the ingestions DAGs**

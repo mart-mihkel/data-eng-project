@@ -70,6 +70,9 @@ x-airflow-common: &airflow-common
     # The following line can be used to set a custom config file, stored in the local config folder
     # If you want to use it, outcomment it and replace airflow.cfg with the name of your config file
     # AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+    AIRFLOW_USER_PASSWORD: ${AIRFLOW_USER_PASSWORD}
+    AIRFLOW_VIEWER_PASSWORD: ${AIRFLOW_VIEWER_PASSWORD}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -89,8 +92,8 @@ services:
   postgres:
     image: postgres:13
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
@@ -118,8 +121,8 @@ services:
   mongo:
     image: mongo:latest
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
       - 27017:27017
       - 27018:27018
@@ -265,8 +268,8 @@ services:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: "true"
       _AIRFLOW_WWW_USER_CREATE: "true"
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
       _PIP_ADDITIONAL_REQUIREMENTS: ""
     user: "0:0"
     volumes:
@@ -320,7 +323,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./docker-volume/db-data-postgres:/var/lib/postgresql/data
+      - postgresql-db-volume:/var/lib/postgresql/data
 
     networks:
       - app_net
@@ -774,49 +777,49 @@ services:
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8586/healthcheck"]
 
-  # ingestion:
-  #   container_name: openmetadata_ingestion
-  #   image: docker.getcollate.io/openmetadata/ingestion:1.6.1
-  #   depends_on:
-  #     elasticsearch:
-  #       condition: service_started
-  #     postgresql:
-  #       condition: service_healthy
-  #     openmetadata-server:
-  #       condition: service_started
-  #   environment:
-  #     AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
-  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  #     AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
-  #     DB_HOST: ${AIRFLOW_DB_HOST:-postgresql}
-  #     DB_PORT: ${AIRFLOW_DB_PORT:-5432}
-  #     AIRFLOW_DB: ${AIRFLOW_DB:-airflow_db}
-  #     DB_USER: ${AIRFLOW_DB_USER:-airflow_user}
-  #     DB_SCHEME: ${AIRFLOW_DB_SCHEME:-postgresql+psycopg2}
-  #     DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow_pass}
-  #     # extra connection-string properties for the database
-  #     # EXAMPLE
-  #     # require SSL (only for Postgres)
-  #     # properties: "?sslmode=require"
-  #     DB_PROPERTIES: ${AIRFLOW_DB_PROPERTIES:-}
-  #     # To test the lineage backend
-  #     # AIRFLOW__LINEAGE__BACKEND: airflow_provider_openmetadata.lineage.backend.OpenMetadataLineageBackend
-  #     # AIRFLOW__LINEAGE__AIRFLOW_SERVICE_NAME: local_airflow
-  #     # AIRFLOW__LINEAGE__OPENMETADATA_API_ENDPOINT: http://openmetadata-server:8585/api
-  #     # AIRFLOW__LINEAGE__JWT_TOKEN: ...
-  #   entrypoint: /bin/bash
-  #   command:
-  #     - "/opt/airflow/ingestion_dependency.sh"
-  #   expose:
-  #     - 8080
-  #   ports:
-  #     - "8080:8080"
-  #   networks:
-  #     - app_net
-  #   volumes:
-  #     - ingestion-volume-dag-airflow:/opt/airflow/dag_generated_configs
-  #     - ingestion-volume-dags:/opt/airflow/dags
-  #     - ingestion-volume-tmp:/tmp
+  ingestion:
+    container_name: openmetadata_ingestion
+    image: docker.getcollate.io/openmetadata/ingestion:1.6.1
+    depends_on:
+      elasticsearch:
+        condition: service_started
+      postgresql:
+        condition: service_healthy
+      openmetadata-server:
+        condition: service_started
+    environment:
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
+      DB_HOST: ${AIRFLOW_DB_HOST:-postgres}
+      DB_PORT: ${AIRFLOW_DB_PORT:-5432}
+      AIRFLOW_DB: ${AIRFLOW_DB:-airflow}
+      DB_USER: ${AIRFLOW_DB_USER:-airflow}
+      DB_SCHEME: ${AIRFLOW_DB_SCHEME:-postgresql+psycopg2}
+      DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow}
+      # extra connection-string properties for the database
+      # EXAMPLE 
+      # require SSL (only for Postgres)
+      # properties: "?sslmode=require"
+      DB_PROPERTIES: ${AIRFLOW_DB_PROPERTIES:-}
+      # To test the lineage backend
+      # AIRFLOW__LINEAGE__BACKEND: airflow_provider_openmetadata.lineage.backend.OpenMetadataLineageBackend
+      # AIRFLOW__LINEAGE__AIRFLOW_SERVICE_NAME: local_airflow
+      # AIRFLOW__LINEAGE__OPENMETADATA_API_ENDPOINT: http://openmetadata-server:8585/api
+      # AIRFLOW__LINEAGE__JWT_TOKEN: ...
+    entrypoint: /bin/bash
+    command:
+      - "/opt/airflow/ingestion_dependency.sh"
+    expose:
+      - 8080
+    ports:
+      - "8090:8080"
+    networks:
+      - app_net
+    volumes:
+      - ingestion-volume-dag-airflow:/opt/airflow/dag_generated_configs
+      - ingestion-volume-dags:/opt/airflow/dags
+      - ingestion-volume-tmp:/tmp
 
 networks:
   app_net:
@@ -826,6 +829,7 @@ networks:
         - subnet: "172.16.240.0/24"
 
 volumes:
+  postgresql-db-volume:
   postgres-db-volume:
   mongo-db-volume:
   ingestion-volume-dag-airflow:

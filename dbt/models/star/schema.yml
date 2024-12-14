@@ -38,6 +38,7 @@ models:
       - name: gps_x
       - name: gps_y
       - name: urban
+      - name: address
       - name: county
       - name: municipality
 

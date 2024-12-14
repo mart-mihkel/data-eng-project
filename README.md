@@ -17,15 +17,16 @@ This project analyzes traffic accidents in Estonia by examining the impact of we
 
 The project uses the following tools and technologies to build a complete data pipeline:
 
-| **Technology**         | **Purpose**                                                                             |
-| ---------------------- | --------------------------------------------------------------------------------------- |
-| **Apache Airflow**     | Automate and schedule ETL workflows to extract and process data from MongoDB.           |
-| **DuckDB**             | Store and query structured datasets efficiently for analytical purposes.                |
-| **dbt**                | Perform data transformations, build a star schema, and handle data governance.          |
-| **MongoDB**            | Store raw accident and weather data in an unstructured format.                          |
-| **Streamlit**          | Create an interactive dashboard for visualizing traffic accident insights.              |
-| **Seaborn/Matplotlib** | Generate advanced visualizations for analyzing weather and traffic impact on accidents. |
-| **Data Governance**    | Ensure sensitive data (e.g., GPS coordinates) is masked while querying.                 |
+| **Technology**      | **Purpose**                                                                    |
+| ------------------- | ------------------------------------------------------------------------------ |
+| **Apache Airflow**  | Automate and schedule ETL workflows to extract and process data from MongoDB.  |
+| **DuckDB**          | Store and query structured datasets efficiently for analytical purposes.       |
+| **dbt**             | Perform data transformations, build a star schema, and handle data governance. |
+| **MongoDB**         | Store raw accident and weather data in an unstructured format.                 |
+| **Streamlit**       | Create an interactive dashboard for visualizing traffic accident insights.     |
+| **Data Privacy**    | Ensure sensitive data (e.g., GPS coordinates) is masked while querying.        |
+| **Data Governance** | Used OpenMetadata for data lineage and governance.                             |
+| **Redis**           | A high-performance in-memory database used for caching and quick lookups.      |
 
 ---
 
@@ -36,12 +37,16 @@ We used the following datasets to perform the analysis:
 1. **Traffic Accidents Dataset**:
    - Contains details about accidents, such as date, location, severity, and participants.
    - Source: Estonian Open Data Portal.
+   - Link to the dataset - https://avaandmed.eesti.ee/datasets/inimkannatanutega-liiklusonnetuste-andmed
+   - Link to the dataset: [Traffic Accidents Dataset](https://avaandmed.eesti.ee/datasets/inimkannatanutega-liiklusonnetuste-andmed)
 2. **Weather Data**:
    - Includes hourly weather conditions (precipitation, temperature, wind speed).
    - Source: Open-Meteo API.
+   - Link to the dataset: [Weather Data](https://www.ilmateenistus.ee/kliima/ajaloolised-ilmaandmed/)
 3. **Traffic Volume Data**:
    - Provides vehicle counts on Estonian highways and roads.
    - Source: Transpordiamet.
+   - Link to the dataset: [Traffic Volume Data](https://www.transpordiamet.ee/liiklussageduse-statistika)
 
 ---
 

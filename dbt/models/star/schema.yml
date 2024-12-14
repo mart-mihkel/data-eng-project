@@ -23,28 +23,23 @@ models:
       - name: gps_x
       - name: gps_y
       - name: urban
+      - name: address
       - name: county
       - name: municipality
 
     # Masked view of location_dim with GPS coordinates excluded
   - name: masked_location_dim
-    description: "View masking GPS coordinates (gps_x, gps_y) for privacy while retaining other location details."
+    description: "View masking GPS coordinates (gps_x, gps_y) and address for privacy while retaining other location details."
     columns:
       - name: id
-        description: "Primary key."
         data_tests:
           - unique
           - not_null
       - name: gps_x
-        description: "Masked GPS latitude (always NULL)."
       - name: gps_y
-        description: "Masked GPS longitude (always NULL)."
       - name: urban
-        description: "Indicates if the location is in an urban area."
       - name: county
-        description: "County of the location."
       - name: municipality
-        description: "Municipality of the location."
 
   - name: weather_dim
     columns:

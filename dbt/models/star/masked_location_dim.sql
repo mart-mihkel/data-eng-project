@@ -4,6 +4,7 @@ SELECT
     urban,
     municipality,
     village,
-    NULL AS gps_x,  -- Mask sensitive fields
-    NULL AS gps_y   -- Mask sensitive fields
+    '#####' AS address,
+    '#####' AS gps_x,
+    '#####' AS gps_y
 FROM {{ ref('location_dim') }}

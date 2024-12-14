@@ -6,10 +6,11 @@ ADD requirements.txt .
 # Install required Python packages
 RUN pip install apache-airflow==${AIRFLOW_VERSION} -r requirements.txt
 
-# Copy the user creation script from /dags into the container
-COPY dags/create_airflow_users.py /opt/airflow/dags/create_airflow_users.py
+# Copy the shell script to the container
+COPY dags/scripts/create_airflow_users.sh /opt/airflow/dags/scripts/create_airflow_users.sh
 
-# Set the entrypoint to initialize Airflow and run the user creation script
-CMD ["bash", "-c", "airflow db upgrade && airflow webserver & sleep 10 && python /opt/airflow/dags/create_airflow_users.py && wait"]
+# Make the script executable
+RUN chmod +x /opt/airflow/dags/scripts/create_airflow_users.sh
 
-
+# Define the startup commands
+CMD bash -c "airflow db upgrade && airflow webserver & sleep 10 && /opt/airflow/dags/scripts/create_airflow_users.sh && wait"

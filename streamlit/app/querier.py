@@ -13,7 +13,7 @@ class CachedQuery():
     def query_cached(self, *, sql: str, cache_key: str) -> pd.DataFrame:
         cache_res = self.redis.get(cache_key)
 
-        if cache_res is None:
+        if cache_res is None or True:
             res = self.duckdb.sql(sql).fetchall()
             df = pd.DataFrame(res)
 

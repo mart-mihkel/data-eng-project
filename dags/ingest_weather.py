@@ -45,6 +45,9 @@ def wrangle():
 
         if(stem == "Haademeeste"):
             df["hour"] = df["Unnamed: 3"].apply(lambda x: x.hour)
+            df["year"] = df["Unnamed: 0"]
+            df["month"] = df["Unnamed: 1"]
+            df["day"] = df["Unnamed: 2"]
         else:
             df["hour"] = df["hour"].apply(lambda x: x.hour)
 

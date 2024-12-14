@@ -202,7 +202,7 @@ def load():
 
 
 with DAG(
-    "traffic_accidents_etl", 
+    "ingest_accidents", 
     start_date=datetime.datetime(2024, 12, 1),
     schedule="@monthly",
     catchup=False,

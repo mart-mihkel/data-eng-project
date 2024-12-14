@@ -92,14 +92,14 @@ def cleanup():
 
 
 with DAG(
-    "transformation_dbt",
+    "transform",
     start_date=datetime.datetime(2024, 12, 1),
     schedule="@monthly",
     catchup=False,
 ) as dag:
     # wait_accidents = ExternalTaskSensor(
     #     task_id='wait_accident_igested',
-    #     external_dag_id='traffic_accidents_etl',
+    #     external_dag_id="ingest_accidents", 
     #     check_existence=True,
     #     mode='reschedule',
     # )
@@ -111,7 +111,7 @@ with DAG(
 
     # wait_weather = ExternalTaskSensor(
     #     task_id='wait_weather_igested',
-    #     external_dag_id='historical_weather_etl',
+    #     external_dag_id="ingest_weather", 
     #     check_existence=True,
     #     mode='reschedule',
     # )
@@ -123,7 +123,7 @@ with DAG(
 
     # wait_density = ExternalTaskSensor(
     #     task_id='wait_density_igested',
-    #     external_dag_id='traffic_density_etl',
+    #     external_dag_id="ingest_traffic_density",
     #     check_existence=True,
     #     mode='reschedule',
     # )

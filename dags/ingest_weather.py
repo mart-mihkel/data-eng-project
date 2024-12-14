@@ -72,7 +72,7 @@ def load():
 
 
 with DAG(
-    "historical_weather_etl", 
+    "ingest_weather", 
     start_date=datetime.datetime(2024, 1, 1),
     schedule="@yearly",
     catchup=False,

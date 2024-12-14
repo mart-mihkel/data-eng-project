@@ -60,7 +60,7 @@ def load():
 
 
 with DAG(
-    "traffic_density_etl",
+    "ingest_traffic_density",
     start_date=datetime.datetime(2024, 1, 1),
     schedule="@yearly",
     catchup=False,

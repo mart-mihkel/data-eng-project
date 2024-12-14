@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: time_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: season
+      - name: year
+      - name: month
+      - name: day
+      - name: hour
+      - name: weekday
+
+  - name: location_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: gps_x
+      - name: gps_y
+      - name: urban
+      - name: address
+      - name: county
+      - name: municipality
+
+    # Masked view of location_dim with GPS coordinates excluded
+  - name: masked_location_dim
+    description: "View masking GPS coordinates (gps_x, gps_y) and address for privacy while retaining other location details."
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: gps_x
+      - name: gps_y
+      - name: urban
+      - name: county
+      - name: municipality
+
+  - name: weather_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: precipitation
+      - name: temperature
+      - name: wind_speed
+      - name: relative_humidity
+
+  - name: road_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: road_geometry
+      - name: road_state_of_repair
+      - name: paving_type
+      - name: speed_limit
+      - name: highway_number
+      - name: highway_km
+      - name: highway_cars_per_day
+
+  - name: parties_dim
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: any_motor_vehicle_involved
+      - name: cars_involved
+      - name: pedestrians_involved
+      - name: low_speed_vehicles_involved
+      - name: elderly_driver_involved
+      - name: public_transportation_vehicle_involved
+      - name: truck_involved
+      - name: motorcycle_involved
+
+  - name: accident_fact
+    columns:
+      - name: id
+        data_tests:
+          - unique
+          - not_null
+      - name: time_id
+      - name: location_id
+      - name: weather_id
+      - name: parties_id
+      - name: road_id
+      - name: happened_at
+      - name: number_people
+      - name: number_vehicles
+      - name: number_fatalities
+      - name: number_injured

@@ -1,4 +1,5 @@
 import os
+import datetime
 import pandas as pd
 
 from pymongo import MongoClient
@@ -7,27 +8,24 @@ from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
+DB = "dataeng_project"
+COLLECTION = "weather"
 MONGO_CONNECTION_STRING = "mongodb://admin:admin@mongo:27017"
 
-WEATHER_DB = "weather"
-WEATHER_COLLECTION = "historical_weather"
-
 COL_MAP = {
-    "Aasta": "Year",
-    "Kuu": "Month",
-    "Päev": "Day",
-    "Kell (UTC)": "Time (UTC)",
-    "Õhutemperatuur °C": "Air Temperature (°C)",
-    "Tunni miinimum õhutemperatuur °C": "Hourly Minimum Air Temperature (°C)",
-    "Tunni maksimum õhutemperatuur °C": "Hourly Maximum Air Temperature (°C)",
-    "10 minuti keskmine tuule suund °": "10 Min Average Wind Direction (°)",
-    "10 minuti keskmine tuule kiirus m/s": "10 Min Average Wind Speed (m/s)",
-    "Tunni maksimum tuule kiirus m/s": "Hourly Maximum Wind Speed (m/s)",
-    "Õhurõhk merepinna kõrgusel hPa": "Air Pressure at Sea Level (hPa)",
-    "Tunni sademete summa mm": "Hourly Precipitation Total (mm)",
-    "Õhurõhk jaama kõrgusel hPa": "Air Pressure at Station Height (hPa)",
-    "Suhteline õhuniiskus %": "Relative Humidity (%)",
-    "Tunni keskmine summaarne kiirgus W/m²": "Hourly Average Total Radiation W/m²"
+    "Aasta": "year",
+    "Kuu": "month",
+    "Päev": "day",
+    "Kell (UTC)": "hour",
+    "Õhutemperatuur °C": "air_temperature",
+    "Tunni miinimum õhutemperatuur °C": "hourly_min_air_temperature",
+    "Tunni maksimum õhutemperatuur °C": "hourly_max_air_temperature",
+    "10 minuti keskmine tuule kiirus m/s": "10_min_average_wind_speed",
+    "Tunni maksimum tuule kiirus m/s": "hourly_maximum_wind_speed",
+    "Tunni sademete summa mm": "hourly_precipitation_total",
+    "Õhurõhk jaama kõrgusel hPa": "air_pressure_at_station_height",
+    "Suhteline õhuniiskus %": "relative_humidity",
+    "Station": "station"
 }
 
 
@@ -38,42 +36,63 @@ def wrangle():
     )
 
     for f in xlsxs:
+        print("Wrangling: ", f)
         df = pd.read_excel(f"/tmp/historical_weather/{f}", header=2)
         df = df.rename(columns=COL_MAP)
 
         stem = f.split(".")[0]
+        df["station"] = stem
+
+        if(stem == "Haademeeste"):
+            df["hour"] = df["Unnamed: 3"].apply(lambda x: x.hour)
+        else:
+            df["hour"] = df["hour"].apply(lambda x: x.hour)
+
+        df = df[df.columns.intersection(COL_MAP.values())]
+
         df.to_csv(f"/tmp/historical_weather/{stem}.csv", index=False)
 
 
 def load():
-    client = MongoClient(MONGO_CONNECTION_STRING)
-    col = client[WEATHER_DB][WEATHER_COLLECTION]
+    client = MongoClient(MONGO_CONNECTION_STRING, timeoutMS=40000)
+    col = client[DB][COLLECTION]
 
     csvs = filter(
-        lambda x: x.endswith("csv"), 
+        lambda x: x.endswith("csv"),
         os.listdir("/tmp/historical_weather")
     )
 
-    for f in csvs:
-        items = pd.read_csv("/tmp/historical_weather/" + f).to_dict(orient="records")
+    for csv in csvs:
+        print("Loading: ", csv)
+        items = pd.read_csv(f"/tmp/historical_weather/{csv}").to_dict(orient="records")
         col.insert_many(items)
 
 
-with DAG("historical_weather_etl", catchup=False) as dag:
-    t1 = BashOperator(
+with DAG(
+    "historical_weather_etl", 
+    start_date=datetime.datetime(2024, 1, 1),
+    schedule="@yearly",
+    catchup=False,
+) as dag:
+    extract = BashOperator(
         task_id="extract_historical_weather",
         bash_command="scripts/download_weather.bash",
     )
 
-    t2 = PythonOperator(
-        task_id="preporcess_historical_weather",
+    wrangle_task = PythonOperator(
+        task_id="preprocess_historical_weather",
         python_callable=wrangle,
     )
 
-    t3 = PythonOperator(
+    load_lake = PythonOperator(
         task_id="load_historical_weather",
         python_callable=load,
     )
 
-    _ = t1 >> t2 >> t3
+    cleanup = BashOperator(
+        task_id="historical_weather_cleanup",
+        bash_command="rm -rf /tmp/historical_weather",
+    )
+
+    _ = extract >> wrangle_task >> load_lake >> cleanup
 

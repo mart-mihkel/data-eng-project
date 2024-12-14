@@ -70,10 +70,9 @@ def serialize_density():
 def cleanup():
     duck_client = duckdb.connect(DUCK_DB)
 
-    # TODO: uncomment when done testing
-    # duck_client.sql("DROP TABLE accidents_tmp")
-    # duck_client.sql("DROP TABLE weather_tmp")
-    # duck_client.sql("DROP TABLE density_tmp")
+    duck_client.sql("DROP TABLE accidents_tmp")
+    duck_client.sql("DROP TABLE weather_tmp")
+    duck_client.sql("DROP TABLE density_tmp")
 
 
 with DAG(

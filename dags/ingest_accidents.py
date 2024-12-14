@@ -186,7 +186,7 @@ def wrangle():
     df["hour"] = df["time"].dt.hour
     df["weekday"] = df["time"].dt.weekday
     df["season"] = df["time"].map(to_season)
-    df["urban"] = df["is_settlement"].to_numpy() == "JAH"
+    df["urban"] = df["is_settlement"].map(lambda x: "Urban" if x=="JAH" else "Rural")
 
     df.to_csv(f"/tmp/{FILE_ID}", index=False)
 

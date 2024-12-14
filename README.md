@@ -52,7 +52,7 @@ We used the following datasets to perform the analysis:
 
 ## **Star Schema**
 
-To organize the data for efficient analysis, we created a **star schema** with the following components:
+To organize the data for efficient analysis, we created a **star schema** with the following components see [schema.yml](./dbt/models/star/schema.yml):
 
 1. **Fact Table**:
    - `accident_fact`: Captures accident-related metrics (e.g., number of injuries, fatalities).
@@ -71,7 +71,7 @@ The project consists of the following steps:
 
 ### 1. **Data Extraction**
 
-- Accident and weather data are extracted from their respective sources and  loaded into **MongoDB**.
+- Accident and weather data are extracted from their respective sources and loaded into a data lake.
 
 ### 2. **Data Transformation**
 
@@ -101,6 +101,12 @@ The project consists of the following steps:
 docker-compose up -d
 docker exec data-eng-project-airflow-worker-1 /mnt/scripts/create_airflow_users.bash
 ```
+
+## Openmetadata
+
+Get jwt token from [http://localhost:8585](http://localhost:8585) 
+Settings -> Bots -> IngestionBot
+Put it in `BOT_JWT` at [ingest_mongodb_metadata.py](./dags/ingest_mongodb_metadata.py)
 
 ### Start Airflow
 

@@ -1,3 +1,4 @@
+import os
 import yaml
 import datetime
 
@@ -7,6 +8,7 @@ from airflow.operators.python import PythonOperator
 from metadata.config.common import load_config_file
 from metadata.workflow.metadata import MetadataWorkflow
 
+BOT_JWT = "<bot_token_here>"
 
 config = """
 source:
@@ -63,14 +65,14 @@ source:
       #     - table4
 sink:
   type: metadata-rest
-  config: {}
+  config: {{}}
 workflowConfig:
   loggerLevel: INFO  # DEBUG, INFO, WARNING or ERROR
   openMetadataServerConfig:
     hostPort: "http://openmetadata-server:8585/api"
     authProvider: openmetadata
     securityConfig:
-      jwtToken: "eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJyb2xlcyI6WyJJbmdlc3Rpb25Cb3RSb2xlIl0sImVtYWlsIjoiaW5nZXN0aW9uLWJvdEBvcGVuLW1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3MzQxODk3ODgsImV4cCI6bnVsbH0.mAfU8V5szSotMvLPfqE8l92h0ptNBzwXsfwyAVewxUKY4z6a8d4CYu3qUe951HTTDdWZd0GS2BdXxIT9B2DdxL33x6Nc4fpa8ZczLycESqtHpdzS_0-pjnnQ4_d1UKnJqtoMJqtju_QsT4lVEooUdQ922GOTgA5tpot0Q2Dop6XEZLXX8-0xzSaNqF3iCgPFhnTkGlhIoXnDuSSsBN8_Schh06a4_xgt-q0J0XqkHlXcwHJz5FgHcio0hqE6Hnmaqxcs9kU9wmqg_6SMTqC4iGK0OrqGXWkJao_GdYYSBtK7t5Ezax-mX4YDk6IEDakxts5HSek2hGPr4D-K8vS8Mw"
+      jwtToken: {bot_jwt}
     ## Store the service Connection information
     storeServiceConnection: true  # false
     ## Secrets Manager Configuration
@@ -83,7 +85,8 @@ workflowConfig:
 """
 
 def metadata_ingestion_workflow():
-    workflow_config = yaml.safe_load(config)
+    tokened = config.format(bot_jwt=BOT_JWT)
+    workflow_config = yaml.safe_load(tokened)
     workflow = MetadataWorkflow.create(workflow_config)
     workflow.execute()
     workflow.raise_from_status()
